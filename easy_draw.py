@@ -1155,6 +1155,7 @@ class Image:
 # TkDocs https://tkdocs.com/shipman/
 
 """
+MIT License
 Copyright (c) 2021 Joe Mazzone
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
