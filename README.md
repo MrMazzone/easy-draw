@@ -6,11 +6,9 @@ Full Documentation - https://daviestech.gitbook.io/easy-draw/
 
 It's easy!  Just download ```easy_draw.py``` and include it in your project directory. 
 
-Currently, the module is not on PyPI so it is not pip installable. Thus, you must download the ```easy_draw.py``` file.
+[Download!](https://github.com/MrMazzone/easy-draw/releases/download/v1.0.2/easy_draw.py)
 
-<form method="get" action="https://raw.githubusercontent.com/MrMazzone/easy-draw/main/easy_draw.py">
-   <button type="submit">Download!</button>
-</form>
+Currently, the module is not on PyPI so it is not pip installable. Thus, you must download the ```easy_draw.py``` file.
 
 # What is Easy Draw?
 
