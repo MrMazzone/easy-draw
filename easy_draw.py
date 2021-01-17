@@ -6,7 +6,7 @@
 
 #######################
 # Easy Draw Module
-# Version 1.0.2
+# Version 1.0.3
 # Created by Joe Mazzone
 # Documentation: https://daviestech.gitbook.io/easy-draw/
 #######################
@@ -30,7 +30,7 @@ class __EasyDrawError(Exception):
         super().__init__(self.message)
 
 
-print("Welcome to Easy Draw! -- version 1.0.2 -- https://daviestech.gitbook.io/easy-draw/")
+print("Welcome to Easy Draw! -- version 1.0.3 -- https://daviestech.gitbook.io/easy-draw/")
 WINDOW = None
 CANVAS = None
 GRID_LINES = []
@@ -85,7 +85,7 @@ def load_canvas(background=None):
             grid_button["text"] = "Grid"
             grid_button["bg"] = "#E32636"
             for line in GRID_LINES:
-                CANVAS.itemconfig(line, state = tk.NORMAL)
+                CANVAS.itemconfig(line, state = tk.DISABLED)
             for label in x_labels:
                 label.configure(fg = "#07649E")
             for label in y_labels:
@@ -199,7 +199,7 @@ def rgb_convert(rgb):
 # --- Drawing Shapes ---
 
 class Rectangle:
-    def __init__(self, xy, width, height, color="black", border_color=None, border_width=0, dashes=None):
+    def __init__(self, xy, width, height, color="black", border_color=None, border_width=0, dashes=None, visible=True):
         global CANVAS
         self.type = "Rectangle"
         self.angle = 0
@@ -210,6 +210,7 @@ class Rectangle:
         self.border_color = border_color
         self.border_width = border_width
         self.dashes = dashes
+        self.visible = visible
         points = [
             self.xy[0], self.xy[1],
             self.xy[0] + self.width, self.xy[1],
@@ -223,11 +224,15 @@ class Rectangle:
         if not self.dashes is None and not type(self.dashes) is tuple:
             self.dashes = (self.dashes, self.dashes)
         self.ID = CANVAS.create_polygon(points, fill=self.color, outline=self.border_color, width=self.border_width, dash=self.dashes)
+        if self.visible:
+            CANVAS.itemconfig(self.ID, state = tk.NORMAL)
+        else:
+            CANVAS.itemconfig(self.ID, state = tk.HIDDEN)
 
     def to_string(self):
         return "Object: " + self.type + "\t ID: " + str(self.ID)
     
-    def set_property(self, xy=None, width=None, height=None, color=None, border_color=None, border_width=None, dashes=None):
+    def set_property(self, xy=None, width=None, height=None, color=None, border_color=None, border_width=None, dashes=None, visible=None):
         global CANVAS
         if not xy is None:
             self.xy = xy
@@ -249,6 +254,8 @@ class Rectangle:
             self.dashes = dashes
             if not type(self.dashes) is tuple:
                 self.dashes = (self.dashes, self.dashes)
+        if not visible is None:
+            self.visible = visible
         points = [
             self.xy[0], self.xy[1],
             self.xy[0] + self.width, self.xy[1],
@@ -259,13 +266,13 @@ class Rectangle:
         self.ID = CANVAS.create_polygon(points, fill=self.color, outline=self.border_color, width=self.border_width, dash=self.dashes)
         CANVAS.tag_lower(self.ID, old_id)
         CANVAS.delete(old_id)
-        self.rotate(self.angle)
+        self.rotate(0)
 
     def rotate(self, angle):
         global CANVAS
         global WINDOW
         self.angle += angle
-        new_angle = math.radians(angle)
+        new_angle = math.radians(self.angle)
         cos_val = math.cos(new_angle)
         sin_val = math.sin(new_angle)
         shape_points = CANVAS.coords(self.ID)
@@ -300,15 +307,13 @@ class Rectangle:
         self.ID = CANVAS.create_polygon(new_points, fill=self.color, outline=self.border_color, width=self.border_width, dash=self.dashes)
         CANVAS.tag_lower(self.ID, old_id)
         CANVAS.delete(old_id)
-    
-    def erase(self):
-        CANVAS.delete(self.ID)
-    
-    def visible(self, value):
-        if value:
+        if self.visible:
             CANVAS.itemconfig(self.ID, state = tk.NORMAL)
         else:
             CANVAS.itemconfig(self.ID, state = tk.HIDDEN)
+    
+    def erase(self):
+        CANVAS.delete(self.ID)
 
     def event_setup(self, event, handler):
         global CANVAS
@@ -316,7 +321,7 @@ class Rectangle:
 
 
 class RegPolygon:
-    def __init__(self, nsides, center_xy, radius, color="black", border_color=None, border_width=0, dashes=None):
+    def __init__(self, nsides, center_xy, radius, color="black", border_color=None, border_width=0, dashes=None, visible=True):
         global CANVAS
         self.nsides = nsides
         self.type = str(self.nsides) + "-Sided Regular Polygon"
@@ -327,6 +332,7 @@ class RegPolygon:
         self.border_color = border_color
         self.border_width = border_width
         self.dashes = dashes
+        self.visible = visible
         angle = 0
         angle_increment = 2*math.pi / self.nsides
         points = []
@@ -343,11 +349,15 @@ class RegPolygon:
         if not self.dashes is None and not type(self.dashes) is tuple:
             self.dashes = (self.dashes, self.dashes)
         self.ID = CANVAS.create_polygon(points, fill=self.color, outline=self.border_color, width=self.border_width, dash=self.dashes)
+        if self.visible:
+            CANVAS.itemconfig(self.ID, state = tk.NORMAL)
+        else:
+            CANVAS.itemconfig(self.ID, state = tk.HIDDEN)
     
     def to_string(self):
         return "Object: " + self.type + "\t ID: " + str(self.ID)
     
-    def set_property(self, nsides=None, center_xy=None, radius=None, color=None, border_color=None, border_width=None, dashes=None):
+    def set_property(self, nsides=None, center_xy=None, radius=None, color=None, border_color=None, border_width=None, dashes=None, visible=None):
         global CANVAS
         if not nsides is None:
             self.nsides = nsides
@@ -370,6 +380,8 @@ class RegPolygon:
             self.dashes = dashes
             if not type(self.dashes) is tuple:
                 self.dashes = (self.dashes, self.dashes)
+        if not visible is None:
+            self.visible = visible
         angle = 0
         angle_increment = 2*math.pi / self.nsides
         points = []
@@ -383,13 +395,13 @@ class RegPolygon:
         self.ID = CANVAS.create_polygon(points, fill=self.color, outline=self.border_color, width=self.border_width, dash=self.dashes)
         CANVAS.tag_lower(self.ID, old_id)
         CANVAS.delete(old_id)
-        self.rotate(self.angle)
+        self.rotate(0)
 
     def rotate(self, angle):
         global CANVAS
         global WINDOW
         self.angle += angle
-        new_angle = math.radians(angle)
+        new_angle = math.radians(self.angle)
         cos_val = math.cos(new_angle)
         sin_val = math.sin(new_angle)
         shape_points = CANVAS.coords(self.ID)
@@ -424,15 +436,13 @@ class RegPolygon:
         self.ID = CANVAS.create_polygon(new_points, fill=self.color, outline=self.border_color, width=self.border_width, dash=self.dashes)
         CANVAS.tag_lower(self.ID, old_id)
         CANVAS.delete(old_id)
-    
-    def erase(self):
-        CANVAS.delete(self.ID)
-    
-    def visible(self, value):
-        if value:
+        if self.visible:
             CANVAS.itemconfig(self.ID, state = tk.NORMAL)
         else:
             CANVAS.itemconfig(self.ID, state = tk.HIDDEN)
+    
+    def erase(self):
+        CANVAS.delete(self.ID)
 
     def event_setup(self, event, handler):
         global CANVAS
@@ -440,7 +450,7 @@ class RegPolygon:
 
 
 class Polygon:
-    def __init__(self, points_list, color="black", border_color=None, border_width=0, dashes=None):
+    def __init__(self, points_list, color="black", border_color=None, border_width=0, dashes=None, visible=True):
         global CANVAS
         self.nsides = len(points_list)
         self.type = str(self.nsides) + "-Sided Polygon"
@@ -449,6 +459,7 @@ class Polygon:
         self.border_color = border_color
         self.border_width = border_width
         self.dashes = dashes
+        self.visible = visible
         if type(self.color) is tuple:
             self.color = rgb_convert(self.color)
         if type(self.border_color) is tuple:
@@ -456,11 +467,15 @@ class Polygon:
         if not self.dashes is None and not type(self.dashes) is tuple:
             self.dashes = (self.dashes, self.dashes)
         self.ID = CANVAS.create_polygon(points_list, fill=self.color, outline=self.border_color, width=self.border_width, dash=self.dashes)
+        if self.visible:
+            CANVAS.itemconfig(self.ID, state = tk.NORMAL)
+        else:
+            CANVAS.itemconfig(self.ID, state = tk.HIDDEN)
     
     def to_string(self):
         return "Object: " + self.type + "\t ID: " + str(self.ID)
     
-    def set_property(self, points_list=None, color=None, border_color=None, border_width=None, dashes=None):
+    def set_property(self, points_list=None, color=None, border_color=None, border_width=None, dashes=None, visible=None):
         global CANVAS
         if not points_list is None:
             self.points_list = points_list
@@ -480,17 +495,19 @@ class Polygon:
             self.dashes = dashes
             if not type(self.dashes) is tuple:
                 self.dashes = (self.dashes, self.dashes)
+        if not visible is None:
+            self.visible = visible
         old_id = self.ID
         self.ID = CANVAS.create_polygon(points_list, fill=self.color, outline=self.border_color, width=self.border_width, dash=self.dashes)
         CANVAS.tag_lower(self.ID, old_id)
         CANVAS.delete(old_id)
-        self.rotate(self.angle)
+        self.rotate(0)
 
     def rotate(self, angle):
         global CANVAS
         global WINDOW
         self.angle += angle
-        new_angle = math.radians(angle)
+        new_angle = math.radians(self.angle)
         cos_val = math.cos(new_angle)
         sin_val = math.sin(new_angle)
         shape_points = CANVAS.coords(self.ID)
@@ -525,15 +542,13 @@ class Polygon:
         self.ID = CANVAS.create_polygon(new_points, fill=self.color, outline=self.border_color, width=self.border_width, dash=self.dashes)
         CANVAS.tag_lower(self.ID, old_id)
         CANVAS.delete(old_id)
-    
-    def erase(self):
-        CANVAS.delete(self.ID)
-
-    def visible(self, value):
-        if value:
+        if self.visible:
             CANVAS.itemconfig(self.ID, state = tk.NORMAL)
         else:
             CANVAS.itemconfig(self.ID, state = tk.HIDDEN)
+    
+    def erase(self):
+        CANVAS.delete(self.ID)
 
     def event_setup(self, event, handler):
         global CANVAS
@@ -541,7 +556,7 @@ class Polygon:
 
 
 class Line:
-    def __init__(self, xy1, xy2, color="black", thickness=5, dashes=None, arrow_start=False, arrow_end=False):
+    def __init__(self, xy1, xy2, color="black", thickness=5, dashes=None, arrow_start=False, arrow_end=False, visible=True):
         global CANVAS
         self.type = "Line"
         self.angle = 0
@@ -552,6 +567,7 @@ class Line:
         self.dashes = dashes
         self.arrow_start = arrow_start
         self.arrow_end = arrow_end
+        self.visible = visible
         x1, y1 = self.xy1
         x2, y2 = self.xy2
         if type(self.color) is tuple:
@@ -566,11 +582,15 @@ class Line:
             self.ID = CANVAS.create_line(x1, y1, x2, y2, fill=self.color, width=self.thickness, dash=self.dashes, arrow=tk.LAST)
         else:
             self.ID = CANVAS.create_line(x1, y1, x2, y2, fill=self.color, width=self.thickness, dash=self.dashes)
+        if self.visible:
+            CANVAS.itemconfig(self.ID, state = tk.NORMAL)
+        else:
+            CANVAS.itemconfig(self.ID, state = tk.HIDDEN)
     
     def to_string(self):
         return "Object: " + self.type + "\t ID: " + str(self.ID)
     
-    def set_property(self, xy1=None, xy2=None, color=None, thickness=None, dashes=None, arrow_start=None, arrow_end=None):
+    def set_property(self, xy1=None, xy2=None, color=None, thickness=None, dashes=None, arrow_start=None, arrow_end=None, visible=None):
         global CANVAS
         if not xy1 is None:
             self.xy1 = xy1
@@ -590,6 +610,8 @@ class Line:
             self.arrow_start = arrow_start
         if not arrow_end is None:
             self.arrow_end = arrow_end
+        if not visible is None:
+            self.visible = visible
         x1, y1 = self.xy1
         x2, y2 = self.xy2
         old_id = self.ID
@@ -603,14 +625,13 @@ class Line:
             self.ID = CANVAS.create_line(x1, y1, x2, y2, fill=self.color, width=self.thickness, dash=self.dashes)
         CANVAS.tag_lower(self.ID, old_id)
         CANVAS.delete(old_id)
-        self.rotate(self.angle)
-        
+        self.rotate(0)
 
     def rotate(self, angle):
         global CANVAS
         global WINDOW
         self.angle += angle
-        new_angle = math.radians(angle)
+        new_angle = math.radians(self.angle)
         cos_val = math.cos(new_angle)
         sin_val = math.sin(new_angle)
         shape_points = CANVAS.coords(self.ID)
@@ -652,15 +673,13 @@ class Line:
             self.ID = CANVAS.create_line(new_points, fill=self.color, width=self.thickness, dash=self.dashes)
         CANVAS.tag_lower(self.ID, old_id)
         CANVAS.delete(old_id)
-    
-    def erase(self):
-        CANVAS.delete(self.ID)
-
-    def visible(self, value):
-        if value:
+        if self.visible:
             CANVAS.itemconfig(self.ID, state = tk.NORMAL)
         else:
             CANVAS.itemconfig(self.ID, state = tk.HIDDEN)
+    
+    def erase(self):
+        CANVAS.delete(self.ID)
 
     def event_setup(self, event, handler):
         global CANVAS
@@ -668,7 +687,7 @@ class Line:
 
 
 class Arc:
-    def __init__(self, center_xy, width, height, sweep_angle, color="black", border_color=None, border_width=0, dashes=None, style="pieslice"):
+    def __init__(self, center_xy, width, height, sweep_angle, color="black", border_color=None, border_width=0, dashes=None, style="pieslice", visible=True):
         global CANVAS
         self.type = "Arc"
         self.start_angle = 0
@@ -677,10 +696,16 @@ class Arc:
         self.height = height
         self.sweep_angle = sweep_angle
         self.color = color
-        self.border_color = border_color
+        if border_color is None:
+            self.border_color = self.color
+            self.has_border = False
+        else:
+            self.border_color = self.border_color
+            self.has_border = True
         self.border_width = border_width
         self.dashes = dashes
         self.style = style
+        self.visible = visible
         center_x, center_y = self.center_xy
         x1 = center_x - (self.width / 2)
         y1 = center_y - (self.height / 2)
@@ -698,11 +723,15 @@ class Arc:
             self.ID = CANVAS.create_arc(x1, y1, x2, y2, start=self.start_angle, extent=self.sweep_angle, fill=self.color, outline=self.border_color, width=self.border_width, dash=self.dashes, style=tk.ARC)
         else:
             self.ID = CANVAS.create_arc(x1, y1, x2, y2, start=self.start_angle, extent=self.sweep_angle, fill=self.color, outline=self.border_color, width=self.border_width, dash=self.dashes, style=tk.PIESLICE)
-    
+        if self.visible:
+            CANVAS.itemconfig(self.ID, state = tk.NORMAL)
+        else:
+            CANVAS.itemconfig(self.ID, state = tk.HIDDEN)
+
     def to_string(self):
         return "Object: " + self.type + "\t ID: " + str(self.ID)
     
-    def set_property(self, center_xy=None, width=None, height=None, sweep_angle=None, color=None, border_color=None, border_width=None, dashes=None, style=None):
+    def set_property(self, center_xy=None, width=None, height=None, sweep_angle=None, color=None, border_color=None, border_width=None, dashes=None, style=None, visible=None):
         global CANVAS
         if not center_xy is None:
             self.center_xy = center_xy
@@ -716,7 +745,10 @@ class Arc:
             self.color = color
             if type(self.color) is tuple:
                 self.color = rgb_convert(self.color)
+            if not self.has_border:
+                self.border_color = self.color
         if not border_color is None:
+            self.has_border = True
             self.border_color = border_color
             if type(self.border_color) is tuple:
                 self.border_color = rgb_convert(self.border_color)
@@ -728,6 +760,8 @@ class Arc:
                 self.dashes = (self.dashes, self.dashes)
         if not style is None:
             self.style = style
+        if not visible is None:
+            self.visible = visible
         center_x, center_y = self.center_xy
         x1 = center_x - (self.width / 2)
         y1 = center_y - (self.height / 2)
@@ -742,7 +776,7 @@ class Arc:
             self.ID = CANVAS.create_arc(x1, y1, x2, y2, start=self.start_angle, extent=self.sweep_angle, fill=self.color, outline=self.border_color, width=self.border_width, dash=self.dashes, style=tk.PIESLICE)
         CANVAS.tag_lower(self.ID, old_id)
         CANVAS.delete(old_id)
-        self.rotate(self.start_angle)
+        self.rotate(0)
 
     def rotate(self, angle):
         global CANVAS
@@ -762,15 +796,13 @@ class Arc:
             self.ID = CANVAS.create_arc(x1, y1, x2, y2, start=self.start_angle, extent=self.sweep_angle, fill=self.color, outline=self.border_color, width=self.border_width, dash=self.dashes, style=tk.PIESLICE)
         CANVAS.tag_lower(self.ID, old_id)
         CANVAS.delete(old_id)
-    
-    def erase(self):
-        CANVAS.delete(self.ID)
-
-    def visible(self, value):
-        if value:
+        if self.visible:
             CANVAS.itemconfig(self.ID, state = tk.NORMAL)
         else:
             CANVAS.itemconfig(self.ID, state = tk.HIDDEN)
+    
+    def erase(self):
+        CANVAS.delete(self.ID)
 
     def event_setup(self, event, handler):
         global CANVAS
@@ -778,7 +810,7 @@ class Arc:
 
 
 class Circle:
-    def __init__(self, center_xy, radius, color="black", border_color=None, border_width=0, dashes=None):
+    def __init__(self, center_xy, radius, color="black", border_color=None, border_width=0, dashes=None, visible=True):
         global CANVAS
         self.type = "Circle"
         self.angle = 0
@@ -788,6 +820,7 @@ class Circle:
         self.border_color = border_color
         self.border_width = border_width
         self.dashes = dashes
+        self.visible = visible
         center_x, center_y = self.center_xy
         x1 = center_x - self.radius
         y1 = center_y - self.radius
@@ -800,11 +833,15 @@ class Circle:
         if not self.dashes is None and not type(self.dashes) is tuple:
             self.dashes = (self.dashes, self.dashes)
         self.ID = CANVAS.create_oval(x1, y1, x2, y2, fill=self.color, outline=self.border_color, width=self.border_width, dash=self.dashes)
+        if self.visible:
+            CANVAS.itemconfig(self.ID, state = tk.NORMAL)
+        else:
+            CANVAS.itemconfig(self.ID, state = tk.HIDDEN)
 
     def to_string(self):
         return "Object: " + self.type + "\t ID: " + str(self.ID)
     
-    def set_property(self, center_xy=None, radius=None, color=None, border_color=None, border_width=None, dashes=None):
+    def set_property(self, center_xy=None, radius=None, color=None, border_color=None, border_width=None, dashes=None, visible=None):
         global CANVAS
         if not center_xy is None:
             self.center_xy = center_xy
@@ -824,6 +861,8 @@ class Circle:
             self.dashes = dashes
             if not type(self.dashes) is tuple:
                 self.dashes = (self.dashes, self.dashes)
+        if not visible is None:
+            self.visible = visible
         center_x, center_y = self.center_xy
         x1 = center_x - self.radius
         y1 = center_y - self.radius
@@ -833,7 +872,7 @@ class Circle:
         self.ID = CANVAS.create_oval(x1, y1, x2, y2, fill=self.color, outline=self.border_color, width=self.border_width, dash=self.dashes)
         CANVAS.tag_lower(self.ID, old_id)
         CANVAS.delete(old_id)
-        self.rotate(self.angle)
+        self.rotate(0)
 
     def rotate(self, angle):
         global CANVAS
@@ -844,7 +883,7 @@ class Circle:
         x2 = center_x + self.radius
         y2 = center_y + self.radius
         self.angle += angle
-        new_angle = math.radians(angle)
+        new_angle = math.radians(self.angle)
         cos_val = math.cos(new_angle)
         sin_val = math.sin(new_angle)
         shape_points = [x1, y1, x2, y2]
@@ -879,15 +918,13 @@ class Circle:
         self.ID = CANVAS.create_oval(new_points, fill=self.color, outline=self.border_color, width=self.border_width, dash=self.dashes)
         CANVAS.tag_lower(self.ID, old_id)
         CANVAS.delete(old_id)
-
-    def erase(self):
-        CANVAS.delete(self.ID)
-
-    def visible(self, value):
-        if value:
+        if self.visible:
             CANVAS.itemconfig(self.ID, state = tk.NORMAL)
         else:
             CANVAS.itemconfig(self.ID, state = tk.HIDDEN)
+
+    def erase(self):
+        CANVAS.delete(self.ID)
 
     def event_setup(self, event, handler):
         global CANVAS
@@ -895,7 +932,7 @@ class Circle:
 
 
 class Oval:
-    def __init__(self, center_xy, width, height, color="black", border_color=None, border_width=0, dashes=None):
+    def __init__(self, center_xy, width, height, color="black", border_color=None, border_width=0, dashes=None, visible=True):
         global CANVAS
         self.type = "Oval"
         self.angle = 0
@@ -906,6 +943,7 @@ class Oval:
         self.border_color = border_color
         self.border_width = border_width
         self.dashes = dashes
+        self.visible = visible
         center_x, center_y = self.center_xy
         x1 = center_x - (self.width / 2)
         y1 = center_y - (self.height / 2)
@@ -918,11 +956,15 @@ class Oval:
         if not self.dashes is None and not type(self.dashes) is tuple:
             self.dashes = (self.dashes, self.dashes)
         self.ID = CANVAS.create_oval(x1, y1, x2, y2, fill=self.color, outline=self.border_color, width=self.border_width, dash=self.dashes)
+        if self.visible:
+            CANVAS.itemconfig(self.ID, state = tk.NORMAL)
+        else:
+            CANVAS.itemconfig(self.ID, state = tk.HIDDEN)
 
     def to_string(self):
         return "Object: " + self.type + "\t ID: " + str(self.ID)
     
-    def set_property(self, center_xy=None, width=None, height=None, color=None, border_color=None, border_width=None, dashes=None):
+    def set_property(self, center_xy=None, width=None, height=None, color=None, border_color=None, border_width=None, dashes=None, visible=None):
         global CANVAS
         if not center_xy is None:
             self.center_xy = center_xy
@@ -944,6 +986,8 @@ class Oval:
             self.dashes = dashes
             if not type(self.dashes) is tuple:
                 self.dashes = (self.dashes, self.dashes)
+        if not visible is None:
+            self.visible = visible
         center_x, center_y = self.center_xy
         x1 = center_x - (self.width / 2)
         y1 = center_y - (self.height / 2)
@@ -953,7 +997,7 @@ class Oval:
         self.ID = CANVAS.create_oval(x1, y1, x2, y2, fill=self.color, outline=self.border_color, width=self.border_width, dash=self.dashes)
         CANVAS.tag_lower(self.ID, old_id)
         CANVAS.delete(old_id)
-        self.rotate(self.angle)
+        self.rotate(0)
 
     def rotate(self, angle):
         global CANVAS
@@ -964,7 +1008,7 @@ class Oval:
         x2 = center_x + (self.width / 2) 
         y2 = center_y + (self.height / 2)
         self.angle += angle
-        new_angle = math.radians(angle)
+        new_angle = math.radians(self.angle)
         cos_val = math.cos(new_angle)
         sin_val = math.sin(new_angle)
         shape_points = [x1, y1, x2, y2]
@@ -999,15 +1043,13 @@ class Oval:
         self.ID = CANVAS.create_oval(new_points, fill=self.color, outline=self.border_color, width=self.border_width, dash=self.dashes)
         CANVAS.tag_lower(self.ID, old_id)
         CANVAS.delete(old_id)
-    
-    def erase(self):
-        CANVAS.delete(self.ID)
-    
-    def visible(self, value):
-        if value:
+        if self.visible:
             CANVAS.itemconfig(self.ID, state = tk.NORMAL)
         else:
             CANVAS.itemconfig(self.ID, state = tk.HIDDEN)
+    
+    def erase(self):
+        CANVAS.delete(self.ID)        
 
     def event_setup(self, event, handler):
         global CANVAS
@@ -1017,7 +1059,7 @@ class Oval:
 # --- Text and Images ---
 
 class Text:
-    def __init__(self, center_xy, text="", color="black", font="Arial", size=16, bold=False, italic=False, underline=False, strikethrough=False):
+    def __init__(self, center_xy, text="", color="black", font="Arial", size=16, bold=False, italic=False, underline=False, strikethrough=False, visible=True):
         global CANVAS
         self.type = "Text"
         self.angle = 0
@@ -1032,6 +1074,7 @@ class Text:
         self.italic = italic
         self.underline = underline
         self.strikethrough = strikethrough
+        self.visible = visible
         style = ""
         if self.bold:
             style += "bold "
@@ -1044,11 +1087,15 @@ class Text:
         font_info = (self.font, self.size, style)
         x, y = self.center_xy
         self.ID = CANVAS.create_text(x, y, text=self.text, fill=self.color, font=font_info, angle=self.angle)
+        if self.visible:
+            CANVAS.itemconfig(self.ID, state = tk.NORMAL)
+        else:
+            CANVAS.itemconfig(self.ID, state = tk.HIDDEN)
 
     def to_string(self):
         return "Object: " + self.type + "\t ID: " + str(self.ID)
     
-    def set_property(self, center_xy=None, text=None, color=None, font=None, size=None, bold=None, italic=None, underline=None, strikethrough=None):
+    def set_property(self, center_xy=None, text=None, color=None, font=None, size=None, bold=None, italic=None, underline=None, strikethrough=None, visible=None):
         global CANVAS
         if not center_xy is None:
             self.center_xy = center_xy
@@ -1068,6 +1115,8 @@ class Text:
             self.underline = underline
         if not strikethrough is None:
             self.strikethrough = strikethrough
+        if not visible is None:
+            self.visible = visible
         x, y = self.center_xy
         old_id = self.ID
         if type(self.color) is tuple:
@@ -1085,7 +1134,10 @@ class Text:
         self.ID = CANVAS.create_text(x, y, text=self.text, fill=self.color, font=font_info, angle=self.angle)
         CANVAS.tag_lower(self.ID, old_id)
         CANVAS.delete(old_id)
-
+        if self.visible:
+            CANVAS.itemconfig(self.ID, state = tk.NORMAL)
+        else:
+            CANVAS.itemconfig(self.ID, state = tk.HIDDEN)
 
     def rotate(self, angle):
         global CANVAS
@@ -1108,15 +1160,13 @@ class Text:
         self.ID = CANVAS.create_text(x, y, text=self.text, fill=self.color, font=font_info, angle=self.angle)
         CANVAS.tag_lower(self.ID, old_id)
         CANVAS.delete(old_id)
-
-    def erase(self):
-        CANVAS.delete(self.ID)
-    
-    def visible(self, value):
-        if value:
+        if self.visible:
             CANVAS.itemconfig(self.ID, state = tk.NORMAL)
         else:
             CANVAS.itemconfig(self.ID, state = tk.HIDDEN)
+
+    def erase(self):
+        CANVAS.delete(self.ID)
 
     def event_setup(self, event, handler):
         global CANVAS
@@ -1129,23 +1179,36 @@ def open_image(filename):
 
 
 class Image:
-    def __init__(self, center_xy, image):
+    def __init__(self, center_xy, image, visible=True):
         global CANVAS
         self.type = "Image"
         self.angle = 0
         self.center_xy = center_xy
         self.image = image
+        self.visible = visible
         x, y = self.center_xy
         self.ID = CANVAS.create_image(x, y, image=self.image)
     
-    def erase(self):
-        CANVAS.delete(self.ID)
-    
-    def visible(self, value):
-        if value:
+    def set_property(self, center_xy=None, image=None, visible=None):
+        global CANVAS
+        if not center_xy is None:
+            self.center_xy = center_xy
+        if not image is None:
+            self.image = image
+        if not visible is None:
+            self.visible = visible
+        old_id = self.ID
+        x, y = self.center_xy
+        self.ID = CANVAS.create_image(x, y, image=self.image)
+        CANVAS.tag_lower(self.ID, old_id)
+        CANVAS.delete(old_id)
+        if self.visible:
             CANVAS.itemconfig(self.ID, state = tk.NORMAL)
         else:
             CANVAS.itemconfig(self.ID, state = tk.HIDDEN)
+
+    def erase(self):
+        CANVAS.delete(self.ID)
 
     def event_setup(self, event, handler):
         global CANVAS
