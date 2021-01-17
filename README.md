@@ -6,6 +6,10 @@ Full Documentation - https://daviestech.gitbook.io/easy-draw/
 
 It's easy!  Just download ```easy_draw.py``` and include it in your project directory. 
 
+Currently, the module is not on PyPI so it is not pip installable. Thus, you must download the ```easy_draw.py``` file.
+
+<a id="raw-url" href="https://raw.githubusercontent.com/MrMazzone/easy-draw/main/easy_draw.py">Click to Download</a>
+
 # What is Easy Draw?
 
 Easy Draw is a simple to use Python module that allows you to create simple graphics primitives (rectangles, circles, polygons, etc.) with Python functions.
