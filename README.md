@@ -4,7 +4,7 @@ Full Documentation - https://daviestech.gitbook.io/easy-draw/
 
 # Setup
 
-It's easy!  Just download easy_draw.py and include it in your project directory. 
+It's easy!  Just download ```easy_draw.py``` and include it in your project directory. 
 
 # What is Easy Draw?
 
