@@ -8,7 +8,9 @@ It's easy!  Just download ```easy_draw.py``` and include it in your project dire
 
 Currently, the module is not on PyPI so it is not pip installable. Thus, you must download the ```easy_draw.py``` file.
 
-<a id="raw-url" href="https://raw.githubusercontent.com/MrMazzone/easy-draw/main/easy_draw.py">Click to Download</a>
+<form method="get" action="https://raw.githubusercontent.com/MrMazzone/easy-draw/main/easy_draw.py">
+   <button type="submit">Download!</button>
+</form>
 
 # What is Easy Draw?
 
