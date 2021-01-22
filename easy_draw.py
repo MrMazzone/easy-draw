@@ -6,7 +6,7 @@
 
 #######################
 # Easy Draw Module
-# Version 1.0.4
+# Version 1.0.5
 # Created by Joe Mazzone
 # Documentation: https://daviestech.gitbook.io/easy-draw/
 #######################
@@ -21,7 +21,6 @@ import tkinter.colorchooser, tkinter.messagebox, tkinter.simpledialog
 from PIL import ImageGrab
 import math
 import time
-import numpy as np
 
 
 class __EasyDrawError(Exception):
@@ -31,7 +30,7 @@ class __EasyDrawError(Exception):
         super().__init__(self.message)
 
 
-print("Welcome to Easy Draw! -- version 1.0.4 -- https://daviestech.gitbook.io/easy-draw/")
+print("Welcome to Easy Draw! -- version 1.0.5 -- https://daviestech.gitbook.io/easy-draw/")
 WINDOW = None
 CANVAS = None
 GRID_LINES = []
@@ -122,7 +121,7 @@ def load_canvas(background=None):
     window_bg = WINDOW.cget("background")
     for i in range(0, 601, 50):
         x_labels.append(tk.Label(text = str(i), fg = window_bg, font=("Arial", 8), padx=0, pady=0))
-        y_labels.append(tk.Label(text = str(i), fg = window_bg, font=("Arial", 8), padx=0, pady=0))
+        y_labels.append(tk.Label(text = "      " + str(i), fg = window_bg, font=("Arial", 8), padx=0, pady=0))
     count = 1
     for label in x_labels:
         label.grid(column=count, row=2, sticky="sw")
@@ -131,10 +130,10 @@ def load_canvas(background=None):
     for label in y_labels:
         label.grid(column=0, row=count, sticky="ne")
         count += 1
-    spacer1 = tk.Label(text = " ")
+    spacer1 = tk.Label(text = " ", font=("Arial", 2))
     spacer1.grid(column=15, row=3, sticky="w", padx=6)
-    spacer2 = tk.Label(text = "   ", font=("Arial", 4))
-    spacer2.grid(column=1, row=0)
+    #spacer2 = tk.Label(text = "   ", font=("Arial", 4))
+    #spacer2.grid(column=1, row=0)
 
 
 def set_canvas_color(color):
@@ -161,6 +160,7 @@ def end():
 def __screenshot__(filename):
     global WINDOW
     global CANVAS
+    global GRID_ON
     x = WINDOW.winfo_rootx() + CANVAS.winfo_x()
     y = WINDOW.winfo_rooty() + CANVAS.winfo_y()
     x1 = x + CANVAS.winfo_width()
@@ -171,14 +171,14 @@ def __screenshot__(filename):
             CANVAS.itemconfig(line, state = tk.NORMAL)
 
 
-def save_canvas():
+def save_canvas(name = None):
     global WINDOW
     global CANVAS
     global GRID_LINES
-    global GRID_ON
     for line in GRID_LINES:
         CANVAS.itemconfig(line, state = tk.HIDDEN)
-    name = tkinter.simpledialog.askstring("Save File", "What would you like your picture's file name to be?", parent=WINDOW)
+    if name is None:
+        name = tkinter.simpledialog.askstring("Save File", "What would you like your picture's file name to be?", parent=WINDOW)
     if (not name is None) and (name != ""):
         print("Saving " + name + ".png ", end="")
         for i in range(5):
@@ -197,25 +197,10 @@ def rgb_convert(rgb):
     return '#%02x%02x%02x' % rgb
 
 
-def __rotate__(point, origin, degrees):
-    """
-    Rotate a point counterclockwise by a given angle around a given origin.
-    """
-    radians = np.deg2rad(degrees)
-    x,y = point
-    offset_x, offset_y = origin
-    adjusted_x = (x - offset_x)
-    adjusted_y = (y - offset_y)
-    cos_rad = np.cos(radians)
-    sin_rad = np.sin(radians)
-    qx = offset_x + cos_rad * adjusted_x + sin_rad * adjusted_y
-    qy = offset_y + -sin_rad * adjusted_x + cos_rad * adjusted_y
-    return qx, qy
-
 # --- Drawing Shapes ---
 
 class Rectangle:
-    def __init__(self, xy, width, height, color="black", border_color=None, border_width=0, dashes=None, visible=True):
+    def __init__(self, xy, width, height, *, color="black", border_color=None, border_width=0, dashes=None, visible=True):
         global CANVAS
         self.type = "Rectangle"
         self.angle = 0
@@ -250,7 +235,7 @@ class Rectangle:
     def to_string(self):
         return "Object: " + self.type + "\t ID: " + str(self.ID)
     
-    def set_property(self, xy=None, width=None, height=None, color=None, border_color=None, border_width=None, dashes=None, visible=None):
+    def set_property(self, *, xy=None, width=None, height=None, color=None, border_color=None, border_width=None, dashes=None, visible=None):
         global CANVAS
         if not xy is None:
             self.xy = xy
@@ -338,7 +323,7 @@ class Rectangle:
 
 
 class RegPolygon:
-    def __init__(self, nsides, center_xy, radius, color="black", border_color=None, border_width=0, dashes=None, visible=True):
+    def __init__(self, *, nsides, center_xy, radius, color="black", border_color=None, border_width=0, dashes=None, visible=True):
         global CANVAS
         self.nsides = nsides
         self.type = str(self.nsides) + "-Sided Regular Polygon"
@@ -376,7 +361,7 @@ class RegPolygon:
     def to_string(self):
         return "Object: " + self.type + "\t ID: " + str(self.ID)
     
-    def set_property(self, nsides=None, center_xy=None, radius=None, color=None, border_color=None, border_width=None, dashes=None, visible=None):
+    def set_property(self, *, nsides=None, center_xy=None, radius=None, color=None, border_color=None, border_width=None, dashes=None, visible=None):
         global CANVAS
         if not nsides is None:
             self.nsides = nsides
@@ -468,7 +453,7 @@ class RegPolygon:
 
 
 class Polygon:
-    def __init__(self, points_list, color="black", border_color=None, border_width=0, dashes=None, visible=True):
+    def __init__(self, points_list, *, color="black", border_color=None, border_width=0, dashes=None, visible=True):
         global CANVAS
         self.nsides = len(points_list)
         self.type = str(self.nsides) + "-Sided Polygon"
@@ -495,7 +480,7 @@ class Polygon:
     def to_string(self):
         return "Object: " + self.type + "\t ID: " + str(self.ID)
     
-    def set_property(self, points_list=None, color=None, border_color=None, border_width=None, dashes=None, visible=None):
+    def set_property(self, *, points_list=None, color=None, border_color=None, border_width=None, dashes=None, visible=None):
         global CANVAS
         if not points_list is None:
             self.points_list = points_list
@@ -576,7 +561,7 @@ class Polygon:
 
 
 class Line:
-    def __init__(self, xy1, xy2, color="black", thickness=5, dashes=None, arrow_start=False, arrow_end=False, visible=True):
+    def __init__(self, xy1, xy2, *, color="black", thickness=5, dashes=None, arrow_start=False, arrow_end=False, visible=True):
         global CANVAS
         self.type = "Line"
         self.angle = 0
@@ -612,7 +597,7 @@ class Line:
     def to_string(self):
         return "Object: " + self.type + "\t ID: " + str(self.ID)
     
-    def set_property(self, xy1=None, xy2=None, color=None, thickness=None, dashes=None, arrow_start=None, arrow_end=None, visible=None):
+    def set_property(self, *, xy1=None, xy2=None, color=None, thickness=None, dashes=None, arrow_start=None, arrow_end=None, visible=None):
         global CANVAS
         if not xy1 is None:
             self.xy1 = xy1
@@ -702,7 +687,7 @@ class Line:
 
 
 class Arc:
-    def __init__(self, center_xy, width, height, sweep_angle, color="black", border_color=None, border_width=0, dashes=None, style="pieslice", visible=True):
+    def __init__(self, center_xy, width, height, sweep_angle, *, color="black", border_color=None, border_width=0, dashes=None, style="pieslice", visible=True):
         global CANVAS
         self.type = "Arc"
         self.start_angle = 0
@@ -748,7 +733,7 @@ class Arc:
     def to_string(self):
         return "Object: " + self.type + "\t ID: " + str(self.ID)
     
-    def set_property(self, center_xy=None, width=None, height=None, sweep_angle=None, color=None, border_color=None, border_width=None, dashes=None, style=None, visible=None):
+    def set_property(self, *, center_xy=None, width=None, height=None, sweep_angle=None, color=None, border_color=None, border_width=None, dashes=None, style=None, visible=None):
         global CANVAS
         if not center_xy is None:
             self.center_xy = center_xy
@@ -817,7 +802,7 @@ class Arc:
 
 
 class Circle:
-    def __init__(self, center_xy, radius, color="black", border_color=None, border_width=0, dashes=None, visible=True):
+    def __init__(self, center_xy, radius, *, color="black", border_color=None, border_width=0, dashes=None, visible=True):
         global CANVAS
         self.type = "Circle"
         self.angle = 0
@@ -850,7 +835,7 @@ class Circle:
     def to_string(self):
         return "Object: " + self.type + "\t ID: " + str(self.ID)
     
-    def set_property(self, center_xy=None, radius=None, color=None, border_color=None, border_width=None, dashes=None, visible=None):
+    def set_property(self, *, center_xy=None, radius=None, color=None, border_color=None, border_width=None, dashes=None, visible=None):
         global CANVAS
         if not center_xy is None:
             self.center_xy = center_xy
@@ -936,7 +921,7 @@ class Circle:
 
 
 class Oval:
-    def __init__(self, center_xy, width, height, color="black", border_color=None, border_width=0, dashes=None, visible=True):
+    def __init__(self, center_xy, width, height, *, color="black", border_color=None, border_width=0, dashes=None, visible=True):
         global CANVAS
         self.type = "Oval"
         self.angle = 0
@@ -970,7 +955,7 @@ class Oval:
     def to_string(self):
         return "Object: " + self.type + "\t ID: " + str(self.ID)
     
-    def set_property(self, center_xy=None, width=None, height=None, color=None, border_color=None, border_width=None, dashes=None, visible=None):
+    def set_property(self, *, center_xy=None, width=None, height=None, color=None, border_color=None, border_width=None, dashes=None, visible=None):
         global CANVAS
         if not center_xy is None:
             self.center_xy = center_xy
@@ -1060,7 +1045,7 @@ class Oval:
 # --- Text and Images ---
 
 class Text:
-    def __init__(self, center_xy, text="", color="black", font="Arial", size=16, bold=False, italic=False, underline=False, strikethrough=False, visible=True):
+    def __init__(self, center_xy, text="", *, color="black", font="Arial", size=16, bold=False, italic=False, underline=False, strikethrough=False, visible=True):
         global CANVAS
         self.type = "Text"
         self.angle = 0
@@ -1098,7 +1083,7 @@ class Text:
     def to_string(self):
         return "Object: " + self.type + "\t ID: " + str(self.ID)
     
-    def set_property(self, center_xy=None, text=None, color=None, font=None, size=None, bold=None, italic=None, underline=None, strikethrough=None, visible=None):
+    def set_property(self, *, center_xy=None, text=None, color=None, font=None, size=None, bold=None, italic=None, underline=None, strikethrough=None, visible=None):
         global CANVAS
         if not center_xy is None:
             self.center_xy = center_xy
@@ -1186,7 +1171,7 @@ def open_image(filename):
 
 
 class Image:
-    def __init__(self, center_xy, image, visible=True):
+    def __init__(self, center_xy, image, *, visible=True):
         global CANVAS
         self.type = "Image"
         self.angle = 0
@@ -1196,7 +1181,7 @@ class Image:
         x, y = self.center_xy
         self.ID = CANVAS.create_image(x, y, image=self.image)
     
-    def set_property(self, center_xy=None, image=None, visible=None):
+    def set_property(self, *, center_xy=None, image=None, visible=None):
         global CANVAS
         if not center_xy is None:
             self.center_xy = center_xy
@@ -1213,6 +1198,9 @@ class Image:
             CANVAS.itemconfig(self.ID, state = tk.NORMAL)
         else:
             CANVAS.itemconfig(self.ID, state = tk.HIDDEN)
+
+    def to_string(self):
+        return "Object: " + self.type + "\t ID: " + str(self.ID)
 
     def erase(self):
         CANVAS.delete(self.ID)
