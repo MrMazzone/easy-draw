@@ -6,7 +6,7 @@
 
 #######################
 # Easy Draw Module
-# Version 1.0.5
+# Version 1.0.6
 # Created by Joe Mazzone
 # Documentation: https://daviestech.gitbook.io/easy-draw/
 #######################
@@ -30,7 +30,7 @@ class __EasyDrawError(Exception):
         super().__init__(self.message)
 
 
-print("Welcome to Easy Draw! -- version 1.0.5 -- https://daviestech.gitbook.io/easy-draw/")
+print("Welcome to Easy Draw! -- version 1.0.6 -- https://daviestech.gitbook.io/easy-draw/")
 WINDOW = None
 CANVAS = None
 GRID_LINES = []
@@ -700,7 +700,7 @@ class Arc:
             self.border_color = self.color
             self.has_border = False
         else:
-            self.border_color = self.border_color
+            self.border_color = border_color
             self.has_border = True
         self.border_width = border_width
         self.dashes = dashes
