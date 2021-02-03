@@ -1,6 +1,6 @@
 # Easy Draw - Python Module
 
-Full Documentation - https://daviestech.gitbook.io/easy-draw/
+Full Documentation - https://easy-draw.joemazzone.net/
 
 # Setup
 
@@ -23,6 +23,6 @@ Easy Draw was created by [Joe Mazzone](https://www.linkedin.com/in/joe-mazzone/)
 
 The project was created to introduce Davies' students to GUI development early in an introductory Python course.  GUIs are how students interact with software.  Let's get them to build GUIs earlier and generate more interest in Computer Science and programming!
 
-Looking for a simple way to create an app with Python?  Check out the Easy App project: https://daviestech.gitbook.io/easy-app/
+Looking for a simple way to create an app with Python?  Check out the Easy App project: https://easy-app.joemazzone.net/
 
 For more information about Davies Career and Technical High School, visit https://www.daviestech.org/
