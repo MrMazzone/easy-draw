@@ -6,9 +6,9 @@
 
 #######################
 # Easy Draw Module
-# Version 1.0.6
+# Version 1.0.7
 # Created by Joe Mazzone
-# Documentation: https://daviestech.gitbook.io/easy-draw/
+# Documentation: https://easy-draw.joemazzone.net/
 #######################
 
 #######################
@@ -30,7 +30,7 @@ class __EasyDrawError(Exception):
         super().__init__(self.message)
 
 
-print("Welcome to Easy Draw! -- version 1.0.6 -- https://daviestech.gitbook.io/easy-draw/")
+print("Welcome to Easy Draw! -- version 1.0.7 -- https://easy-draw.joemazzone.net/")
 WINDOW = None
 CANVAS = None
 GRID_LINES = []
@@ -194,7 +194,12 @@ def canvas_event_setup(event, handler):
 
 
 def rgb_convert(rgb):
-    return '#%02x%02x%02x' % rgb
+    if len(rgb) != 3:
+        raise __EasyDrawError(message = "RGB colors must have 3 values.")
+    elif (rgb[0] >= 0 and rgb[0] <= 255) and (rgb[1] >= 0 and rgb[1] <= 255) and (rgb[2] >= 0 and rgb[2] <= 255):
+        return '#%02x%02x%02x' % rgb
+    else:
+        raise __EasyDrawError(message = "RGB values must be positive numbers and cannot exceed 255.")
 
 
 # --- Drawing Shapes ---
@@ -455,6 +460,7 @@ class RegPolygon:
 class Polygon:
     def __init__(self, points_list, *, color="black", border_color=None, border_width=0, dashes=None, visible=True):
         global CANVAS
+        self.points_list = points_list
         self.nsides = len(points_list)
         self.type = str(self.nsides) + "-Sided Polygon"
         self.angle = 0
@@ -471,7 +477,7 @@ class Polygon:
             self.border_color = rgb_convert(self.border_color)
         if not self.dashes is None and not type(self.dashes) is tuple:
             self.dashes = (self.dashes, self.dashes)
-        self.ID = CANVAS.create_polygon(points_list, fill=self.color, outline=self.border_color, width=self.border_width, dash=self.dashes)
+        self.ID = CANVAS.create_polygon(self.points_list, fill=self.color, outline=self.border_color, width=self.border_width, dash=self.dashes)
         if self.visible:
             CANVAS.itemconfig(self.ID, state = tk.NORMAL)
         else:
