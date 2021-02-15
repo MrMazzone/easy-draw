@@ -251,7 +251,7 @@ class Rectangle:
     border_color - Default is None. Color of the border.
     border_width - Default is 0px. Size of the border in pixels. 
     dashes - Default is None. Size of the dashes for the border in pixels.
-    visible - Default is True. True = Shape can be seen. False = shape cannot be seen.
+    visible - Default is True. True = Shape can be seen. False = Shape cannot be seen.
 
     Methods
     -------
@@ -401,7 +401,7 @@ class RegPolygon:
     border_color - Default is None. Color of the border.
     border_width - Default is 0px. Size of the border in pixels. 
     dashes - Default is None. Size of the dashes for the border in pixels.
-    visible - Default is True. True = Shape can be seen. False = shape cannot be seen.
+    visible - Default is True. True = Shape can be seen. False = Shape cannot be seen.
 
     Methods
     -------
@@ -556,7 +556,7 @@ class Polygon:
     border_color - Default is None. Color of the border.
     border_width - Default is 0px. Size of the border in pixels. 
     dashes - Default is None. Size of the dashes for the border in pixels.
-    visible - Default is True. True = Shape can be seen. False = shape cannot be seen.
+    visible - Default is True. True = Shape can be seen. False = Shape cannot be seen.
 
     Methods
     -------
@@ -696,7 +696,7 @@ class Line:
     dashes - Default is None. Size of the dashes for the border in pixels.
     arrow_start - Default is False. Add an arrow to the start of the line.
     arrow_end - Default is False. Add an arrow to the end of the line.
-    visible - Default is True. True = Shape can be seen. False = shape cannot be seen.
+    visible - Default is True. True = Shape can be seen. False = Shape cannot be seen.
 
     Methods
     -------
@@ -836,151 +836,6 @@ class Line:
         self.handle_list.append(handler)
 
 
-class Arc:
-    """
-    Draws a arc using a slice of a circle. 
-
-    Properties
-    ----------
-    center_xy - REQUIRED - The center coordinate (x, y) of the circle used to create the arc.
-    width - REQUIRED - The width of the circle used to create the arc.
-    height - REQUIRED - The height of the circle used to create the arc.
-    sweep_angle - REQUIRED - The amount of the arc to show. From 0 to the angle in degrees identified. 
-    color - Default is black. RGB tuple color value, hexadecimal color value, or string containing color name can be used. 
-    border_color - Default is None. Color of the border.
-    border_width - Default is 0px. Size of the border in pixels. 
-    dashes - Default is None. Size of the dashes for the border in pixels.
-    style - The arc comes in three styles choices: "pieslice", "chord", and "arc"
-    visible - Default is True. True = Shape can be seen. False = shape cannot be seen.
-
-    Methods
-    -------
-    .to_string() - Used to print information about an instance.
-    .set_property() - Used to change one of the property values of an instance. 
-    .rotate() - Used to rotate the shape by x degrees. Negative values rotate the opposite direction.
-    .erase() - Used to removed the instance from the canvas. 
-    .event_setup() - Used to bind an event and handler to the instance.
-    """
-    def __init__(self, center_xy, width, height, sweep_angle, *, 
-                color="black", border_color=None, border_width=0, dashes=None, style="pieslice", visible=True):
-        global CANVAS
-        self.type = "Arc"
-        self.start_angle = 0
-        self.center_xy = center_xy
-        self.width = width
-        self.height = height
-        self.sweep_angle = sweep_angle
-        self.color = color
-        if border_color is None:
-            self.border_color = self.color
-            self.has_border = False
-        else:
-            self.border_color = border_color
-            self.has_border = True
-        self.border_width = border_width
-        self.dashes = dashes
-        self.style = style
-        self.visible = visible
-        self.event_list = []
-        self.handle_list = []
-        center_x, center_y = self.center_xy
-        x1 = center_x - (self.width / 2)
-        y1 = center_y - (self.height / 2)
-        x2 = center_x + (self.width / 2) 
-        y2 = center_y + (self.height / 2)
-        if type(self.color) is tuple:
-            self.color = rgb_convert(self.color)
-        if type(self.border_color) is tuple:
-            self.border_color = rgb_convert(self.border_color)
-        if not self.dashes is None and not type(self.dashes) is tuple:
-            self.dashes = (self.dashes, self.dashes)
-        if self.style.lower() == "chord":
-            self.ID = CANVAS.create_arc(x1, y1, x2, y2, start=self.start_angle, extent=self.sweep_angle, fill=self.color, outline=self.border_color, width=self.border_width, dash=self.dashes, style=tk.CHORD)
-        elif self.style.lower() == "arc":
-            self.ID = CANVAS.create_arc(x1, y1, x2, y2, start=self.start_angle, extent=self.sweep_angle, fill=self.color, outline=self.border_color, width=self.border_width, dash=self.dashes, style=tk.ARC)
-        else:
-            self.ID = CANVAS.create_arc(x1, y1, x2, y2, start=self.start_angle, extent=self.sweep_angle, fill=self.color, outline=self.border_color, width=self.border_width, dash=self.dashes, style=tk.PIESLICE)
-        if self.visible:
-            CANVAS.itemconfig(self.ID, state = tk.NORMAL)
-        else:
-            CANVAS.itemconfig(self.ID, state = tk.HIDDEN)
-
-    def to_string(self):
-        """Used to print information about an instance."""
-        return "Object: " + self.type + "\t ID: " + str(self.ID)
-    
-    def set_property(self, *, center_xy=None, width=None, height=None, sweep_angle=None, color=None, border_color=None, border_width=None, dashes=None, style=None, visible=None):
-        """Used to change one of the property values of an instance."""
-        global CANVAS
-        if not center_xy is None:
-            self.center_xy = center_xy
-        if not width is None:
-            self.width = width
-        if not height is None:
-            self.height = height
-        if not sweep_angle is None:
-            self.sweep_angle = sweep_angle
-        if not color is None:
-            self.color = color
-            if type(self.color) is tuple:
-                self.color = rgb_convert(self.color)
-            if not self.has_border:
-                self.border_color = self.color
-        if not border_color is None:
-            self.has_border = True
-            self.border_color = border_color
-            if type(self.border_color) is tuple:
-                self.border_color = rgb_convert(self.border_color)
-        if not border_width is None:
-            self.border_width = border_width
-        if not dashes is None:
-            self.dashes = dashes
-            if not type(self.dashes) is tuple:
-                self.dashes = (self.dashes, self.dashes)
-        if not style is None:
-            self.style = style
-        if not visible is None:
-            self.visible = visible
-        self.rotate(0)
-
-    def rotate(self, angle):
-        """Used to rotate the shape by x degrees. Negative values rotate the opposite direction."""
-        global CANVAS
-        global WINDOW
-        self.start_angle += angle
-        center_x, center_y = self.center_xy
-        x1 = center_x - (self.width / 2)
-        y1 = center_y - (self.height / 2)
-        x2 = center_x + (self.width / 2) 
-        y2 = center_y + (self.height / 2)
-        old_id = self.ID
-        if self.style.lower() == "chord":
-            self.ID = CANVAS.create_arc(x1, y1, x2, y2, start=self.start_angle, extent=self.sweep_angle, fill=self.color, outline=self.border_color, width=self.border_width, dash=self.dashes, style=tk.CHORD)
-        elif self.style.lower() == "arc":
-            self.ID = CANVAS.create_arc(x1, y1, x2, y2, start=self.start_angle, extent=self.sweep_angle, fill=self.color, outline=self.border_color, width=self.border_width, dash=self.dashes, style=tk.ARC)
-        else:
-            self.ID = CANVAS.create_arc(x1, y1, x2, y2, start=self.start_angle, extent=self.sweep_angle, fill=self.color, outline=self.border_color, width=self.border_width, dash=self.dashes, style=tk.PIESLICE)
-        CANVAS.tag_lower(self.ID, old_id)
-        CANVAS.delete(old_id)
-        if self.visible:
-            CANVAS.itemconfig(self.ID, state = tk.NORMAL)
-        else:
-            CANVAS.itemconfig(self.ID, state = tk.HIDDEN)
-        for i in range(len(self.event_list)):
-            CANVAS.tag_bind(self.ID, self.event_list[i], self.handle_list[i])
-    
-    def erase(self):
-        """Used to removed the instance from the canvas."""
-        CANVAS.delete(self.ID)
-
-    def event_setup(self, event, handler):
-        """Used to bind an event and handler to the instance."""
-        global CANVAS
-        CANVAS.tag_bind(self.ID, event, handler)
-        self.event_list.append(event)
-        self.handle_list.append(handler)
-
-
 class Circle:
     """
     Draws a circle with a center coordinate and a radius.
@@ -993,7 +848,7 @@ class Circle:
     border_color - Default is None. Color of the border.
     border_width - Default is 0px. Size of the border in pixels. 
     dashes - Default is None. Size of the dashes for the border in pixels.
-    visible - Default is True. True = Shape can be seen. False = shape cannot be seen.
+    visible - Default is True. True = Shape can be seen. False = Shape cannot be seen.
 
     Methods
     -------
@@ -1139,7 +994,7 @@ class Oval:
     border_color - Default is None. Color of the border.
     border_width - Default is 0px. Size of the border in pixels. 
     dashes - Default is None. Size of the dashes for the border in pixels.
-    visible - Default is True. True = Shape can be seen. False = shape cannot be seen.
+    visible - Default is True. True = Shape can be seen. False = Shape cannot be seen.
 
     Methods
     -------
@@ -1275,6 +1130,158 @@ class Oval:
         self.handle_list.append(handler)
 
 
+class Arc:
+    """
+    Draws a arc using a slice of a circle. 
+
+    Properties
+    ----------
+    center_xy - REQUIRED - The center coordinate (x, y) of the circle used to create the arc.
+    width - REQUIRED - The width of the circle used to create the arc.
+    height - REQUIRED - The height of the circle used to create the arc.
+    sweep_angle - REQUIRED - The amount of the arc to show. From 0 to the angle in degrees identified. 
+    color - Default is black. RGB tuple color value, hexadecimal color value, or string containing color name can be used. 
+    border_color - Default is None. Color of the border.
+    border_width - Default is 0px. Size of the border in pixels. 
+    dashes - Default is None. Size of the dashes for the border in pixels.
+    style - Default is "pieslice". The arc comes in three styles choices: "pieslice", "chord", and "arc"
+    visible - Default is True. True = Shape can be seen. False = Shape cannot be seen.
+
+    Methods
+    -------
+    .to_string() - Used to print information about an instance.
+    .set_property() - Used to change one of the property values of an instance. 
+    .rotate() - Used to rotate the shape by x degrees. Negative values rotate the opposite direction.
+    .erase() - Used to removed the instance from the canvas. 
+    .event_setup() - Used to bind an event and handler to the instance.
+    """
+
+    def __init__(self, center_xy, width, height, sweep_angle, *,
+                 color="black", border_color=None, border_width=0, dashes=None, style="pieslice", visible=True):
+        global CANVAS
+        self.type = "Arc"
+        self.start_angle = 0
+        self.center_xy = center_xy
+        self.width = width
+        self.height = height
+        self.sweep_angle = sweep_angle
+        self.color = color
+        if border_color is None:
+            self.border_color = self.color
+            self.has_border = False
+        else:
+            self.border_color = border_color
+            self.has_border = True
+        self.border_width = border_width
+        self.dashes = dashes
+        self.style = style
+        self.visible = visible
+        self.event_list = []
+        self.handle_list = []
+        center_x, center_y = self.center_xy
+        x1 = center_x - (self.width / 2)
+        y1 = center_y - (self.height / 2)
+        x2 = center_x + (self.width / 2)
+        y2 = center_y + (self.height / 2)
+        if type(self.color) is tuple:
+            self.color = rgb_convert(self.color)
+        if type(self.border_color) is tuple:
+            self.border_color = rgb_convert(self.border_color)
+        if not self.dashes is None and not type(self.dashes) is tuple:
+            self.dashes = (self.dashes, self.dashes)
+        if self.style.lower() == "chord":
+            self.ID = CANVAS.create_arc(x1, y1, x2, y2, start=self.start_angle, extent=self.sweep_angle, fill=self.color,
+                                        outline=self.border_color, width=self.border_width, dash=self.dashes, style=tk.CHORD)
+        elif self.style.lower() == "arc":
+            self.ID = CANVAS.create_arc(x1, y1, x2, y2, start=self.start_angle, extent=self.sweep_angle,
+                                        fill=self.color, outline=self.border_color, width=self.border_width, dash=self.dashes, style=tk.ARC)
+        else:
+            self.ID = CANVAS.create_arc(x1, y1, x2, y2, start=self.start_angle, extent=self.sweep_angle, fill=self.color,
+                                        outline=self.border_color, width=self.border_width, dash=self.dashes, style=tk.PIESLICE)
+        if self.visible:
+            CANVAS.itemconfig(self.ID, state=tk.NORMAL)
+        else:
+            CANVAS.itemconfig(self.ID, state=tk.HIDDEN)
+
+    def to_string(self):
+        """Used to print information about an instance."""
+        return "Object: " + self.type + "\t ID: " + str(self.ID)
+
+    def set_property(self, *, center_xy=None, width=None, height=None, sweep_angle=None, color=None, border_color=None, border_width=None, dashes=None, style=None, visible=None):
+        """Used to change one of the property values of an instance."""
+        global CANVAS
+        if not center_xy is None:
+            self.center_xy = center_xy
+        if not width is None:
+            self.width = width
+        if not height is None:
+            self.height = height
+        if not sweep_angle is None:
+            self.sweep_angle = sweep_angle
+        if not color is None:
+            self.color = color
+            if type(self.color) is tuple:
+                self.color = rgb_convert(self.color)
+            if not self.has_border:
+                self.border_color = self.color
+        if not border_color is None:
+            self.has_border = True
+            self.border_color = border_color
+            if type(self.border_color) is tuple:
+                self.border_color = rgb_convert(self.border_color)
+        if not border_width is None:
+            self.border_width = border_width
+        if not dashes is None:
+            self.dashes = dashes
+            if not type(self.dashes) is tuple:
+                self.dashes = (self.dashes, self.dashes)
+        if not style is None:
+            self.style = style
+        if not visible is None:
+            self.visible = visible
+        self.rotate(0)
+
+    def rotate(self, angle):
+        """Used to rotate the shape by x degrees. Negative values rotate the opposite direction."""
+        global CANVAS
+        global WINDOW
+        self.start_angle += angle
+        center_x, center_y = self.center_xy
+        x1 = center_x - (self.width / 2)
+        y1 = center_y - (self.height / 2)
+        x2 = center_x + (self.width / 2)
+        y2 = center_y + (self.height / 2)
+        old_id = self.ID
+        if self.style.lower() == "chord":
+            self.ID = CANVAS.create_arc(x1, y1, x2, y2, start=self.start_angle, extent=self.sweep_angle, fill=self.color,
+                                        outline=self.border_color, width=self.border_width, dash=self.dashes, style=tk.CHORD)
+        elif self.style.lower() == "arc":
+            self.ID = CANVAS.create_arc(x1, y1, x2, y2, start=self.start_angle, extent=self.sweep_angle,
+                                        fill=self.color, outline=self.border_color, width=self.border_width, dash=self.dashes, style=tk.ARC)
+        else:
+            self.ID = CANVAS.create_arc(x1, y1, x2, y2, start=self.start_angle, extent=self.sweep_angle, fill=self.color,
+                                        outline=self.border_color, width=self.border_width, dash=self.dashes, style=tk.PIESLICE)
+        CANVAS.tag_lower(self.ID, old_id)
+        CANVAS.delete(old_id)
+        if self.visible:
+            CANVAS.itemconfig(self.ID, state=tk.NORMAL)
+        else:
+            CANVAS.itemconfig(self.ID, state=tk.HIDDEN)
+        for i in range(len(self.event_list)):
+            CANVAS.tag_bind(self.ID, self.event_list[i], self.handle_list[i])
+
+    def erase(self):
+        """Used to removed the instance from the canvas."""
+        CANVAS.delete(self.ID)
+
+    def event_setup(self, event, handler):
+        """Used to bind an event and handler to the instance."""
+        global CANVAS
+        CANVAS.tag_bind(self.ID, event, handler)
+        self.event_list.append(event)
+        self.handle_list.append(handler)
+
+
 # --- Text and Images ---
 
 class Text:
@@ -1284,7 +1291,7 @@ class Text:
     Properties
     ----------
     center_xy - REQUIRED - The center coordinate (x, y) of where to draw the text.
-    text - Default is ""/empty string. 
+    text - Default is ""/empty string. The text you want to display.
     color - Default is black. RGB tuple color value, hexadecimal color value, or string containing color name can be used. 
     font - Default is Arial. The font family used for the text. Font must be installed on machine to be used. 
     size - Default is 16. The font size of the text.
@@ -1292,7 +1299,7 @@ class Text:
     italic - Default is False. When set to True, it italicizes the text.
     underline - Default is False. When set to True, it underlines the text.
     strikethrough - Default is False. When set to True, it strikes-out the text.
-    visible - Default is True. True = Shape can be seen. False = shape cannot be seen.
+    visible - Default is True. True = Text can be seen. False = Text cannot be seen.
 
     Methods
     -------
@@ -1441,8 +1448,8 @@ class Image:
     Properties
     ----------
     center_xy - REQUIRED - The center coordinate (x, y) of where to draw the image.
-    image - REQUIRED - The image file to draw. Must be opened with open_image() before used here.
-    visible - Default is True. True = Shape can be seen. False = shape cannot be seen.
+    image - REQUIRED - The image file to draw. Must use the open_image() function to create the required image object.
+    visible - Default is True. True = Image can be seen. False = Image cannot be seen.
 
     Methods
     -------
