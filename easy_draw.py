@@ -6,15 +6,39 @@
 
 #######################
 # Easy Draw Module
-# Version 1.0.7
+# Version 1.0.8
 # Created by Joe Mazzone
 # Documentation: https://easy-draw.joemazzone.net/
 #######################
 
 #######################
-# This module was developed for students to easily create basic Python GUIs by drawing graphics primitives.
-# It features drawing functions for many shapes, as well as event handling for basic animations and games.
+# This module was developed for students to easily create basic Python 
+# GUIs by drawing graphics primitives.  It features drawing functions 
+# for many shapes, as well as event handling for basic animations and games.
 #######################
+
+# Easy Draw Docstring
+"""
+Easy Draw module - Objects and function to easily create drawings.
+    Objects:
+        - Rectangle
+        - RegPolygon
+        - Polygon
+        - Line
+        - Arc
+        - Circle
+        - Oval
+        - Text
+        - Image
+    Functions:
+        - load_canvas()
+        - end()
+        - set_canvas_color()
+        - save_canvas()
+        - canvas_event_setup()
+        - open_image()
+        - rgb_convert()
+"""
 
 import tkinter as tk
 import tkinter.colorchooser, tkinter.messagebox, tkinter.simpledialog
@@ -24,25 +48,28 @@ import time
 
 
 class __EasyDrawError(Exception):
-    """ Raised for error caused by not properly using the module """
+    """Raised for error caused by not properly using Easy Draw."""
     def __init__(self, message="Seems you did something you shouldn't with Easy Draw..."):
         self.message = message
         super().__init__(self.message)
 
 
-print("Welcome to Easy Draw! -- version 1.0.7 -- https://easy-draw.joemazzone.net/")
+print("Welcome to Easy Draw! -- version 1.0.8 -- https://easy-draw.joemazzone.net/")
 WINDOW = None
 CANVAS = None
 GRID_LINES = []
-GRID_ON = False
+grid_on = False
 
 
 def load_canvas(background=None):
-    '''Opens Easy Draw window with a 600x600 canvas.'''
+    """
+    Opens Easy Draw window with a 600x600px canvas.
+    Must be called before instantiating drawing objects.
+    """
     global WINDOW
     global CANVAS
     global GRID_LINES
-    global GRID_ON
+    global grid_on
     WINDOW = tk.Tk()
     WINDOW.title("Easy Draw")
     WINDOW.resizable(False, False)
@@ -69,9 +96,9 @@ def load_canvas(background=None):
     color_button.grid(column=1, row=1, columnspan=4, padx=5, pady=5)
     def toggle_grid():
         global GRID_LINES
-        global GRID_ON
-        if GRID_ON:
-            GRID_ON = False
+        global grid_on
+        if grid_on:
+            grid_on = False
             grid_button["text"] = "Grid"
             grid_button["bg"] = "#07649E"
             for line in GRID_LINES:
@@ -81,7 +108,7 @@ def load_canvas(background=None):
             for label in y_labels:
                 label.configure(fg = WINDOW.cget("background"))
         else:
-            GRID_ON = True
+            grid_on = True
             grid_button["text"] = "Grid"
             grid_button["bg"] = "#E32636"
             for line in GRID_LINES:
@@ -132,11 +159,10 @@ def load_canvas(background=None):
         count += 1
     spacer1 = tk.Label(text = " ", font=("Arial", 2))
     spacer1.grid(column=15, row=3, sticky="w", padx=6)
-    #spacer2 = tk.Label(text = "   ", font=("Arial", 4))
-    #spacer2.grid(column=1, row=0)
 
 
 def set_canvas_color(color):
+    """Used to set the background color of the drawing canvas."""
     global CANVAS
     if type(color) is tuple:
         color = rgb_convert(color)
@@ -144,6 +170,10 @@ def set_canvas_color(color):
 
 
 def end():
+    """
+    Every Easy Draw program must end with this function call.
+    Sets up event loop and other important aspects of Easy Draw.
+    """
     global CANVAS
     global WINDOW
     global GRID_LINES
@@ -158,20 +188,22 @@ def end():
 
 
 def __screenshot__(filename):
+    """Should only be used internally! Grabs canvas image."""
     global WINDOW
     global CANVAS
-    global GRID_ON
+    global grid_on
     x = WINDOW.winfo_rootx() + CANVAS.winfo_x()
     y = WINDOW.winfo_rooty() + CANVAS.winfo_y()
     x1 = x + CANVAS.winfo_width()
     y1 = y + CANVAS.winfo_height()
     ImageGrab.grab().crop((x,y,x1,y1)).save(filename + ".png")
-    if GRID_ON:
+    if grid_on:
         for line in GRID_LINES:
             CANVAS.itemconfig(line, state = tk.NORMAL)
 
 
 def save_canvas(name = None):
+    """Used to save the canvas without pressing the save button."""
     global WINDOW
     global CANVAS
     global GRID_LINES
@@ -189,11 +221,13 @@ def save_canvas(name = None):
     
 
 def canvas_event_setup(event, handler):
+    """Used to setup an event for the entire canvas and not just a drawing object."""
     global CANVAS
     CANVAS.bind_all(event, handler)
 
 
 def rgb_convert(rgb):
+    """Used to convert an RGB color value to hex."""
     if len(rgb) != 3:
         raise __EasyDrawError(message = "RGB colors must have 3 values.")
     elif (rgb[0] >= 0 and rgb[0] <= 255) and (rgb[1] >= 0 and rgb[1] <= 255) and (rgb[2] >= 0 and rgb[2] <= 255):
@@ -205,6 +239,28 @@ def rgb_convert(rgb):
 # --- Drawing Shapes ---
 
 class Rectangle:
+    """
+    Draws a rectangle from the top-left corner (x, y) with a given width and height.
+
+    Properties
+    ----------
+    xy - REQUIRED - The x and y coordinate of the rectangle's top-left corner as a tuple.
+    width - REQUIRED - The width of the rectangle in pixels.
+    height - REQUIRED - The height of the rectangle in pixels.
+    color - Default is black. RGB tuple color value, hexadecimal color value, or string containing color name can be used. 
+    border_color - Default is None. Color of the border.
+    border_width - Default is 0px. Size of the border in pixels. 
+    dashes - Default is None. Size of the dashes for the border in pixels.
+    visible - Default is True. True = Shape can be seen. False = shape cannot be seen.
+
+    Methods
+    -------
+    .to_string() - Used to print information about an instance.
+    .set_property() - Used to change one of the property values of an instance. 
+    .rotate() - Used to rotate the shape by x degrees. Negative values rotate the opposite direction.
+    .erase() - Used to removed the instance from the canvas. 
+    .event_setup() - Used to bind an event and handler to the instance.
+    """
     def __init__(self, xy, width, height, *, color="black", border_color=None, border_width=0, dashes=None, visible=True):
         global CANVAS
         self.type = "Rectangle"
@@ -238,9 +294,11 @@ class Rectangle:
             CANVAS.itemconfig(self.ID, state = tk.HIDDEN)
 
     def to_string(self):
+        """Used to print information about an instance."""
         return "Object: " + self.type + "\t ID: " + str(self.ID)
     
     def set_property(self, *, xy=None, width=None, height=None, color=None, border_color=None, border_width=None, dashes=None, visible=None):
+        """Used to change one of the property values of an instance."""
         global CANVAS
         if not xy is None:
             self.xy = xy
@@ -267,6 +325,7 @@ class Rectangle:
         self.rotate(0)
 
     def rotate(self, angle):
+        """Used to rotate the shape by x degrees. Negative values rotate the opposite direction."""
         global CANVAS
         global WINDOW
         self.angle += angle
@@ -318,9 +377,11 @@ class Rectangle:
             CANVAS.tag_bind(self.ID, self.event_list[i], self.handle_list[i])
     
     def erase(self):
+        """Used to removed the instance from the canvas."""
         CANVAS.delete(self.ID)
 
     def event_setup(self, event, handler):
+        """Used to bind an event and handler to the instance."""
         global CANVAS
         CANVAS.tag_bind(self.ID, event, handler)
         self.event_list.append(event)
@@ -328,7 +389,29 @@ class Rectangle:
 
 
 class RegPolygon:
-    def __init__(self, *, nsides, center_xy, radius, color="black", border_color=None, border_width=0, dashes=None, visible=True):
+    """
+    Draws a regular polygon, n sided shape with equal sides.
+
+    Properties
+    ----------
+    nsides - REQUIRED - The number of sides the polygon has.
+    center_xy - REQUIRED - The x and y coordinate of the polygon's center as a tuple.
+    radius - REQUIRED - The distance in pixels from the center to any outer point.
+    color - Default is black. RGB tuple color value, hexadecimal color value, or string containing color name can be used. 
+    border_color - Default is None. Color of the border.
+    border_width - Default is 0px. Size of the border in pixels. 
+    dashes - Default is None. Size of the dashes for the border in pixels.
+    visible - Default is True. True = Shape can be seen. False = shape cannot be seen.
+
+    Methods
+    -------
+    .to_string() - Used to print information about an instance.
+    .set_property() - Used to change one of the property values of an instance. 
+    .rotate() - Used to rotate the shape by x degrees. Negative values rotate the opposite direction.
+    .erase() - Used to removed the instance from the canvas. 
+    .event_setup() - Used to bind an event and handler to the instance.
+    """
+    def __init__(self, nsides, center_xy, radius, *, color="black", border_color=None, border_width=0, dashes=None, visible=True):
         global CANVAS
         self.nsides = nsides
         self.type = str(self.nsides) + "-Sided Regular Polygon"
@@ -364,9 +447,11 @@ class RegPolygon:
             CANVAS.itemconfig(self.ID, state = tk.HIDDEN)
     
     def to_string(self):
+        """Used to print information about an instance."""
         return "Object: " + self.type + "\t ID: " + str(self.ID)
     
     def set_property(self, *, nsides=None, center_xy=None, radius=None, color=None, border_color=None, border_width=None, dashes=None, visible=None):
+        """Used to change one of the property values of an instance."""
         global CANVAS
         if not nsides is None:
             self.nsides = nsides
@@ -394,6 +479,7 @@ class RegPolygon:
         self.rotate(0)
 
     def rotate(self, angle):
+        """Used to rotate the shape by x degrees. Negative values rotate the opposite direction."""
         global CANVAS
         global WINDOW
         self.angle += angle
@@ -448,9 +534,11 @@ class RegPolygon:
             CANVAS.tag_bind(self.ID, self.event_list[i], self.handle_list[i])
     
     def erase(self):
+        """Used to removed the instance from the canvas."""
         CANVAS.delete(self.ID)
 
     def event_setup(self, event, handler):
+        """Used to bind an event and handler to the instance."""
         global CANVAS
         CANVAS.tag_bind(self.ID, event, handler)
         self.event_list.append(event)
@@ -458,8 +546,30 @@ class RegPolygon:
 
 
 class Polygon:
+    """
+    Draws a polygon using a list of points.
+
+    Properties
+    ----------
+    points_list - REQUIRED - A list of x y coordinates identifying the points of the polygon. List must have an even number of values.
+    color - Default is black. RGB tuple color value, hexadecimal color value, or string containing color name can be used. 
+    border_color - Default is None. Color of the border.
+    border_width - Default is 0px. Size of the border in pixels. 
+    dashes - Default is None. Size of the dashes for the border in pixels.
+    visible - Default is True. True = Shape can be seen. False = shape cannot be seen.
+
+    Methods
+    -------
+    .to_string() - Used to print information about an instance.
+    .set_property() - Used to change one of the property values of an instance. 
+    .rotate() - Used to rotate the shape by x degrees. Negative values rotate the opposite direction.
+    .erase() - Used to removed the instance from the canvas. 
+    .event_setup() - Used to bind an event and handler to the instance.
+    """
     def __init__(self, points_list, *, color="black", border_color=None, border_width=0, dashes=None, visible=True):
         global CANVAS
+        if points_list % 2 != 0:
+            raise __EasyDrawError(message = "The points_list must have an even number of values as it should contain xy coordinate pairs.")
         self.points_list = points_list
         self.nsides = len(points_list)
         self.type = str(self.nsides) + "-Sided Polygon"
@@ -484,11 +594,15 @@ class Polygon:
             CANVAS.itemconfig(self.ID, state = tk.HIDDEN)
     
     def to_string(self):
+        """Used to print information about an instance."""
         return "Object: " + self.type + "\t ID: " + str(self.ID)
     
     def set_property(self, *, points_list=None, color=None, border_color=None, border_width=None, dashes=None, visible=None):
+        """Used to change one of the property values of an instance."""
         global CANVAS
         if not points_list is None:
+            if points_list % 2 != 0:
+                raise __EasyDrawError(message="The points_list must have an even number of values as it should contain xy coordinate pairs.")
             self.points_list = points_list
             self.nsides = len(self.points_list)
             self.type = str(self.nsides) + "-Sided Polygon"
@@ -511,6 +625,7 @@ class Polygon:
         self.rotate(0)
 
     def rotate(self, angle):
+        """Used to rotate the shape by x degrees. Negative values rotate the opposite direction."""
         global CANVAS
         global WINDOW
         self.angle += angle
@@ -557,9 +672,11 @@ class Polygon:
             CANVAS.tag_bind(self.ID, self.event_list[i], self.handle_list[i])
     
     def erase(self):
+        """Used to removed the instance from the canvas."""
         CANVAS.delete(self.ID)
 
     def event_setup(self, event, handler):
+        """Used to bind an event and handler to the instance."""
         global CANVAS
         CANVAS.tag_bind(self.ID, event, handler)
         self.event_list.append(event)
@@ -567,6 +684,28 @@ class Polygon:
 
 
 class Line:
+    """
+    Draws a line using a starting xy coordinate and ending xy coordinate.
+
+    Properties
+    ----------
+    xy1 - REQUIRED - The starting xy coordinate of the line as a tuple.
+    xy2 - REQUIRED - The ending xy coordinate of the line as a tuple.
+    color - Default is black. RGB tuple color value, hexadecimal color value, or string containing color name can be used. 
+    thickness - Default is 5px. The width of the line.
+    dashes - Default is None. Size of the dashes for the border in pixels.
+    arrow_start - Default is False. Add an arrow to the start of the line.
+    arrow_end - Default is False. Add an arrow to the end of the line.
+    visible - Default is True. True = Shape can be seen. False = shape cannot be seen.
+
+    Methods
+    -------
+    .to_string() - Used to print information about an instance.
+    .set_property() - Used to change one of the property values of an instance. 
+    .rotate() - Used to rotate the shape by x degrees. Negative values rotate the opposite direction.
+    .erase() - Used to removed the instance from the canvas. 
+    .event_setup() - Used to bind an event and handler to the instance.
+    """
     def __init__(self, xy1, xy2, *, color="black", thickness=5, dashes=None, arrow_start=False, arrow_end=False, visible=True):
         global CANVAS
         self.type = "Line"
@@ -601,9 +740,11 @@ class Line:
             CANVAS.itemconfig(self.ID, state = tk.HIDDEN)
     
     def to_string(self):
+        """Used to print information about an instance."""
         return "Object: " + self.type + "\t ID: " + str(self.ID)
     
     def set_property(self, *, xy1=None, xy2=None, color=None, thickness=None, dashes=None, arrow_start=None, arrow_end=None, visible=None):
+        """Used to change one of the property values of an instance."""
         global CANVAS
         if not xy1 is None:
             self.xy1 = xy1
@@ -628,6 +769,7 @@ class Line:
         self.rotate(0)
 
     def rotate(self, angle):
+        """Used to rotate the shape by x degrees. Negative values rotate the opposite direction."""
         global CANVAS
         global WINDOW
         self.angle += angle
@@ -683,9 +825,11 @@ class Line:
             CANVAS.tag_bind(self.ID, self.event_list[i], self.handle_list[i])
     
     def erase(self):
+        """Used to removed the instance from the canvas."""
         CANVAS.delete(self.ID)
 
     def event_setup(self, event, handler):
+        """Used to bind an event and handler to the instance."""
         global CANVAS
         CANVAS.tag_bind(self.ID, event, handler)
         self.event_list.append(event)
@@ -693,7 +837,32 @@ class Line:
 
 
 class Arc:
-    def __init__(self, center_xy, width, height, sweep_angle, *, color="black", border_color=None, border_width=0, dashes=None, style="pieslice", visible=True):
+    """
+    Draws a arc using a slice of a circle. 
+
+    Properties
+    ----------
+    center_xy - REQUIRED - The center coordinate (x, y) of the circle used to create the arc.
+    width - REQUIRED - The width of the circle used to create the arc.
+    height - REQUIRED - The height of the circle used to create the arc.
+    sweep_angle - REQUIRED - The amount of the arc to show. From 0 to the angle in degrees identified. 
+    color - Default is black. RGB tuple color value, hexadecimal color value, or string containing color name can be used. 
+    border_color - Default is None. Color of the border.
+    border_width - Default is 0px. Size of the border in pixels. 
+    dashes - Default is None. Size of the dashes for the border in pixels.
+    style - The arc comes in three styles choices: "pieslice", "chord", and "arc"
+    visible - Default is True. True = Shape can be seen. False = shape cannot be seen.
+
+    Methods
+    -------
+    .to_string() - Used to print information about an instance.
+    .set_property() - Used to change one of the property values of an instance. 
+    .rotate() - Used to rotate the shape by x degrees. Negative values rotate the opposite direction.
+    .erase() - Used to removed the instance from the canvas. 
+    .event_setup() - Used to bind an event and handler to the instance.
+    """
+    def __init__(self, center_xy, width, height, sweep_angle, *, 
+                color="black", border_color=None, border_width=0, dashes=None, style="pieslice", visible=True):
         global CANVAS
         self.type = "Arc"
         self.start_angle = 0
@@ -737,9 +906,11 @@ class Arc:
             CANVAS.itemconfig(self.ID, state = tk.HIDDEN)
 
     def to_string(self):
+        """Used to print information about an instance."""
         return "Object: " + self.type + "\t ID: " + str(self.ID)
     
     def set_property(self, *, center_xy=None, width=None, height=None, sweep_angle=None, color=None, border_color=None, border_width=None, dashes=None, style=None, visible=None):
+        """Used to change one of the property values of an instance."""
         global CANVAS
         if not center_xy is None:
             self.center_xy = center_xy
@@ -773,6 +944,7 @@ class Arc:
         self.rotate(0)
 
     def rotate(self, angle):
+        """Used to rotate the shape by x degrees. Negative values rotate the opposite direction."""
         global CANVAS
         global WINDOW
         self.start_angle += angle
@@ -798,9 +970,11 @@ class Arc:
             CANVAS.tag_bind(self.ID, self.event_list[i], self.handle_list[i])
     
     def erase(self):
+        """Used to removed the instance from the canvas."""
         CANVAS.delete(self.ID)
 
     def event_setup(self, event, handler):
+        """Used to bind an event and handler to the instance."""
         global CANVAS
         CANVAS.tag_bind(self.ID, event, handler)
         self.event_list.append(event)
@@ -808,6 +982,27 @@ class Arc:
 
 
 class Circle:
+    """
+    Draws a circle with a center coordinate and a radius.
+
+    Properties
+    ----------
+    center_xy - REQUIRED - The center coordinate (x, y) of the circle.
+    radius - REQUIRED - The measurement in pixels from the center of the circle to the edge.
+    color - Default is black. RGB tuple color value, hexadecimal color value, or string containing color name can be used. 
+    border_color - Default is None. Color of the border.
+    border_width - Default is 0px. Size of the border in pixels. 
+    dashes - Default is None. Size of the dashes for the border in pixels.
+    visible - Default is True. True = Shape can be seen. False = shape cannot be seen.
+
+    Methods
+    -------
+    .to_string() - Used to print information about an instance.
+    .set_property() - Used to change one of the property values of an instance. 
+    .rotate() - Used to rotate the shape by x degrees. Negative values rotate the opposite direction.
+    .erase() - Used to removed the instance from the canvas. 
+    .event_setup() - Used to bind an event and handler to the instance.
+    """
     def __init__(self, center_xy, radius, *, color="black", border_color=None, border_width=0, dashes=None, visible=True):
         global CANVAS
         self.type = "Circle"
@@ -839,9 +1034,11 @@ class Circle:
             CANVAS.itemconfig(self.ID, state = tk.HIDDEN)
 
     def to_string(self):
+        """Used to print information about an instance."""
         return "Object: " + self.type + "\t ID: " + str(self.ID)
     
     def set_property(self, *, center_xy=None, radius=None, color=None, border_color=None, border_width=None, dashes=None, visible=None):
+        """Used to change one of the property values of an instance."""
         global CANVAS
         if not center_xy is None:
             self.center_xy = center_xy
@@ -866,6 +1063,7 @@ class Circle:
         self.rotate(0)
 
     def rotate(self, angle):
+        """Used to rotate the shape by x degrees. Negative values rotate the opposite direction."""
         global CANVAS
         global WINDOW
         center_x, center_y = self.center_xy
@@ -917,9 +1115,11 @@ class Circle:
             CANVAS.tag_bind(self.ID, self.event_list[i], self.handle_list[i])
 
     def erase(self):
+        """Used to removed the instance from the canvas."""
         CANVAS.delete(self.ID)
 
     def event_setup(self, event, handler):
+        """Used to bind an event and handler to the instance."""
         global CANVAS
         CANVAS.tag_bind(self.ID, event, handler)
         self.event_list.append(event)
@@ -927,6 +1127,28 @@ class Circle:
 
 
 class Oval:
+    """
+    Draws an oval with a center coordinate, a width, and a height.
+
+    Properties
+    ----------
+    center_xy - REQUIRED - The center coordinate (x, y) of the oval.
+    width - REQUIRED - The measurement in pixels of the left edge to the right edge of the oval.
+    height - REQUIRED - The measurement in pixels of the top edge to the bottom edge of the oval.
+    color - Default is black. RGB tuple color value, hexadecimal color value, or string containing color name can be used. 
+    border_color - Default is None. Color of the border.
+    border_width - Default is 0px. Size of the border in pixels. 
+    dashes - Default is None. Size of the dashes for the border in pixels.
+    visible - Default is True. True = Shape can be seen. False = shape cannot be seen.
+
+    Methods
+    -------
+    .to_string() - Used to print information about an instance.
+    .set_property() - Used to change one of the property values of an instance. 
+    .rotate() - Used to rotate the shape by x degrees. Negative values rotate the opposite direction.
+    .erase() - Used to removed the instance from the canvas. 
+    .event_setup() - Used to bind an event and handler to the instance.
+    """
     def __init__(self, center_xy, width, height, *, color="black", border_color=None, border_width=0, dashes=None, visible=True):
         global CANVAS
         self.type = "Oval"
@@ -959,9 +1181,11 @@ class Oval:
             CANVAS.itemconfig(self.ID, state = tk.HIDDEN)
 
     def to_string(self):
+        """Used to print information about an instance."""
         return "Object: " + self.type + "\t ID: " + str(self.ID)
     
     def set_property(self, *, center_xy=None, width=None, height=None, color=None, border_color=None, border_width=None, dashes=None, visible=None):
+        """Used to change one of the property values of an instance."""
         global CANVAS
         if not center_xy is None:
             self.center_xy = center_xy
@@ -988,6 +1212,7 @@ class Oval:
         self.rotate(0)
 
     def rotate(self, angle):
+        """Used to rotate the shape by x degrees. Negative values rotate the opposite direction."""
         global CANVAS
         global WINDOW
         center_x, center_y = self.center_xy
@@ -1039,9 +1264,11 @@ class Oval:
             CANVAS.tag_bind(self.ID, self.event_list[i], self.handle_list[i])
     
     def erase(self):
+        """Used to removed the instance from the canvas."""
         CANVAS.delete(self.ID)        
 
     def event_setup(self, event, handler):
+        """Used to bind an event and handler to the instance."""
         global CANVAS
         CANVAS.tag_bind(self.ID, event, handler)
         self.event_list.append(event)
@@ -1051,7 +1278,32 @@ class Oval:
 # --- Text and Images ---
 
 class Text:
-    def __init__(self, center_xy, text="", *, color="black", font="Arial", size=16, bold=False, italic=False, underline=False, strikethrough=False, visible=True):
+    """
+    Draws text from a center coordinate.
+
+    Properties
+    ----------
+    center_xy - REQUIRED - The center coordinate (x, y) of where to draw the text.
+    text - Default is ""/empty string. 
+    color - Default is black. RGB tuple color value, hexadecimal color value, or string containing color name can be used. 
+    font - Default is Arial. The font family used for the text. Font must be installed on machine to be used. 
+    size - Default is 16. The font size of the text.
+    bold - Default is False. When set to True, it bolds the text.
+    italic - Default is False. When set to True, it italicizes the text.
+    underline - Default is False. When set to True, it underlines the text.
+    strikethrough - Default is False. When set to True, it strikes-out the text.
+    visible - Default is True. True = Shape can be seen. False = shape cannot be seen.
+
+    Methods
+    -------
+    .to_string() - Used to print information about an instance.
+    .set_property() - Used to change one of the property values of an instance. 
+    .rotate() - Used to rotate the shape by x degrees. Negative values rotate the opposite direction.
+    .erase() - Used to removed the instance from the canvas. 
+    .event_setup() - Used to bind an event and handler to the instance.
+    """
+    def __init__(self, center_xy, text="", *, color="black", font="Arial", size=16, 
+                bold=False, italic=False, underline=False, strikethrough=False, visible=True):
         global CANVAS
         self.type = "Text"
         self.angle = 0
@@ -1087,9 +1339,11 @@ class Text:
             CANVAS.itemconfig(self.ID, state = tk.HIDDEN)
 
     def to_string(self):
+        """Used to print information about an instance."""
         return "Object: " + self.type + "\t ID: " + str(self.ID)
     
     def set_property(self, *, center_xy=None, text=None, color=None, font=None, size=None, bold=None, italic=None, underline=None, strikethrough=None, visible=None):
+        """Used to change one of the property values of an instance."""
         global CANVAS
         if not center_xy is None:
             self.center_xy = center_xy
@@ -1136,6 +1390,7 @@ class Text:
             CANVAS.tag_bind(self.ID, self.event_list[i], self.handle_list[i])
 
     def rotate(self, angle):
+        """Used to rotate the shape by x degrees. Negative values rotate the opposite direction."""
         global CANVAS
         global WINDOW
         self.angle += angle
@@ -1164,19 +1419,38 @@ class Text:
             CANVAS.tag_bind(self.ID, self.event_list[i], self.handle_list[i])
 
     def erase(self):
+        """Used to removed the instance from the canvas."""
         CANVAS.delete(self.ID)
 
     def event_setup(self, event, handler):
+        """Used to bind an event and handler to the instance."""
         global CANVAS
         CANVAS.tag_bind(self.ID, event, handler)
 
 
 def open_image(filename):
+    """Used to open an image file for Easy Draw to use."""
     img_file = tk.PhotoImage(file=filename)
     return img_file
 
 
 class Image:
+    """
+    Draws an image from an image file.
+
+    Properties
+    ----------
+    center_xy - REQUIRED - The center coordinate (x, y) of where to draw the image.
+    image - REQUIRED - The image file to draw. Must be opened with open_image() before used here.
+    visible - Default is True. True = Shape can be seen. False = shape cannot be seen.
+
+    Methods
+    -------
+    .to_string() - Used to print information about an instance.
+    .set_property() - Used to change one of the property values of an instance. 
+    .erase() - Used to removed the instance from the canvas. 
+    .event_setup() - Used to bind an event and handler to the instance.
+    """
     def __init__(self, center_xy, image, *, visible=True):
         global CANVAS
         self.type = "Image"
@@ -1188,6 +1462,7 @@ class Image:
         self.ID = CANVAS.create_image(x, y, image=self.image)
     
     def set_property(self, *, center_xy=None, image=None, visible=None):
+        """Used to change one of the property values of an instance."""
         global CANVAS
         if not center_xy is None:
             self.center_xy = center_xy
@@ -1206,12 +1481,15 @@ class Image:
             CANVAS.itemconfig(self.ID, state = tk.HIDDEN)
 
     def to_string(self):
+        """Used to print information about an instance."""
         return "Object: " + self.type + "\t ID: " + str(self.ID)
 
     def erase(self):
+        """Used to removed the instance from the canvas."""
         CANVAS.delete(self.ID)
 
     def event_setup(self, event, handler):
+        """Used to bind an event and handler to the instance."""
         global CANVAS
         CANVAS.tag_bind(self.ID, event, handler)
 
