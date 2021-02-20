@@ -6,7 +6,7 @@
 
 #######################
 # Easy Draw Module
-# Version 1.0.8
+# Version 1.0.9
 # Created by Joe Mazzone
 # Documentation: https://easy-draw.joemazzone.net/
 #######################
@@ -54,11 +54,13 @@ class __EasyDrawError(Exception):
         super().__init__(self.message)
 
 
-print("Welcome to Easy Draw! -- version 1.0.8 -- https://easy-draw.joemazzone.net/")
+print("Welcome to Easy Draw! -- version 1.0.9 -- https://easy-draw.joemazzone.net/")
 WINDOW = None
 CANVAS = None
 GRID_LINES = []
 grid_on = False
+POINTS_LIST_ERROR = __EasyDrawError(
+    message="The points_list must have an even number of values as it should contain xy coordinate pairs.")
 
 
 def load_canvas(background=None):
@@ -85,7 +87,9 @@ def load_canvas(background=None):
     def openColorDialog():
         color = colorDialog.show()
         if not color[1] is None:
-            tkinter.messagebox.showinfo("Your Color", "The color you chose is: " + "\n\n" + color[1] + "\n\n" + "RBG (" + str(int(color[0][0])) + ", " + str(int(color[0][1])) + ", " + str(int(color[0][2])) + ")")
+            tkinter.messagebox.showinfo("Your Color", 
+                                        "The color you chose is: " + "\n\n" + color[1] + "\n\n" + "RBG (" + str(int(color[0][0])) 
+                                        + ", " + str(int(color[0][1])) + ", " + str(int(color[0][2])) + ")")
     color_button = tk.Button(
         text = "Color Picker",
         font = ("Arial", 12, "bold"),
@@ -568,8 +572,9 @@ class Polygon:
     """
     def __init__(self, points_list, *, color="black", border_color=None, border_width=0, dashes=None, visible=True):
         global CANVAS
-        if points_list % 2 != 0:
-            raise __EasyDrawError(message = "The points_list must have an even number of values as it should contain xy coordinate pairs.")
+        global POINTS_LIST_ERROR
+        if len(points_list) % 2 != 0:
+            raise POINTS_LIST_ERROR
         self.points_list = points_list
         self.nsides = len(points_list)
         self.type = str(self.nsides) + "-Sided Polygon"
@@ -600,9 +605,10 @@ class Polygon:
     def set_property(self, *, points_list=None, color=None, border_color=None, border_width=None, dashes=None, visible=None):
         """Used to change one of the property values of an instance."""
         global CANVAS
+        global POINTS_LIST_ERROR
         if not points_list is None:
-            if points_list % 2 != 0:
-                raise __EasyDrawError(message="The points_list must have an even number of values as it should contain xy coordinate pairs.")
+            if len(points_list) % 2 != 0:
+                raise POINTS_LIST_ERROR
             self.points_list = points_list
             self.nsides = len(self.points_list)
             self.type = str(self.nsides) + "-Sided Polygon"
