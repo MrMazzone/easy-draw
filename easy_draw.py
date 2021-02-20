@@ -6,7 +6,7 @@
 
 #######################
 # Easy Draw Module
-# Version 1.0.9
+# Version 1.1.0
 # Created by Joe Mazzone
 # Documentation: https://easy-draw.joemazzone.net/
 #######################
@@ -54,13 +54,17 @@ class __EasyDrawError(Exception):
         super().__init__(self.message)
 
 
-print("Welcome to Easy Draw! -- version 1.0.9 -- https://easy-draw.joemazzone.net/")
+print("Welcome to Easy Draw! -- version 1.1.0 -- https://easy-draw.joemazzone.net/")
 WINDOW = None
 CANVAS = None
 GRID_LINES = []
 grid_on = False
 POINTS_LIST_ERROR = __EasyDrawError(
     message="The points_list must have an even number of values as it should contain xy coordinate pairs.")
+LINE_COORDINATES_ERROR = __EasyDrawError(
+    message="You must use xy1 and xy2 OR a points_list to create a line.")
+LINE_STYLE_ERROR = __EasyDrawError(
+    message="Line only supports \"round\" and \"cut\" as a style")
 
 
 def load_canvas(background=None):
@@ -712,34 +716,63 @@ class Line:
     .erase() - Used to removed the instance from the canvas. 
     .event_setup() - Used to bind an event and handler to the instance.
     """
-    def __init__(self, xy1, xy2, *, color="black", thickness=5, dashes=None, arrow_start=False, arrow_end=False, visible=True):
+    def __init__(self, xy1=None, xy2=None, *, points_list=None, color="black", thickness=5, 
+                dashes=None, arrow_start=False, arrow_end=False, style="round", visible=True):
         global CANVAS
+        global LINE_COORDINATES_ERROR
+        global LINE_STYLE_ERROR
+        global POINTS_LIST_ERROR
         self.type = "Line"
         self.angle = 0
-        self.xy1 = xy1
-        self.xy2 = xy2
+        if (xy1 is None or xy2 is None) and points_list is None:
+            raise LINE_COORDINATES_ERROR
+        elif points_list is None:
+            self.points_list = [xy1[0], xy1[1], xy2[0], xy2[1]]
+        else:
+            if len(points_list) % 2 != 0:
+                raise POINTS_LIST_ERROR
+            self.points_list = points_list
         self.color = color
         self.thickness = thickness
         self.dashes = dashes
         self.arrow_start = arrow_start
         self.arrow_end = arrow_end
+        self.style = style
         self.visible = visible
         self.event_list = []
         self.handle_list = []
-        x1, y1 = self.xy1
-        x2, y2 = self.xy2
         if type(self.color) is tuple:
             self.color = rgb_convert(self.color)
         if not self.dashes is None and not type(self.dashes) is tuple:
             self.dashes = (self.dashes, self.dashes)
-        if self.arrow_start and self.arrow_end:
-            self.ID = CANVAS.create_line(x1, y1, x2, y2, fill=self.color, width=self.thickness, dash=self.dashes, arrow=tk.BOTH)
-        elif self.arrow_start:
-            self.ID = CANVAS.create_line(x1, y1, x2, y2, fill=self.color, width=self.thickness, dash=self.dashes, arrow=tk.FIRST)
-        elif self.arrow_end:
-            self.ID = CANVAS.create_line(x1, y1, x2, y2, fill=self.color, width=self.thickness, dash=self.dashes, arrow=tk.LAST)
+        if self.style.lower() == "round":
+            if self.arrow_start and self.arrow_end:
+                self.ID = CANVAS.create_line(self.points_list, fill=self.color, width=self.thickness, dash=self.dashes, arrow=tk.BOTH,     
+                                            capstyle=tk.ROUND, joinstyle=tk.ROUND)
+            elif self.arrow_start:
+                self.ID = CANVAS.create_line(self.points_list, fill=self.color, width=self.thickness,
+                                            dash=self.dashes, arrow=tk.FIRST, capstyle=tk.ROUND, joinstyle=tk.ROUND)
+            elif self.arrow_end:
+                self.ID = CANVAS.create_line(self.points_list, fill=self.color, width=self.thickness,
+                                            dash=self.dashes, arrow=tk.LAST, capstyle=tk.ROUND, joinstyle=tk.ROUND)
+            else:
+                self.ID = CANVAS.create_line(self.points_list, fill=self.color, width=self.thickness,
+                                            dash=self.dashes, capstyle=tk.ROUND, joinstyle=tk.ROUND)
+        elif self.style.lower() == "cut":
+            if self.arrow_start and self.arrow_end:
+                self.ID = CANVAS.create_line(self.points_list, fill=self.color, width=self.thickness, dash=self.dashes, arrow=tk.BOTH,
+                                             capstyle=tk.BUTT, joinstyle=tk.BEVEL)
+            elif self.arrow_start:
+                self.ID = CANVAS.create_line(self.points_list, fill=self.color, width=self.thickness,
+                                             dash=self.dashes, arrow=tk.FIRST, capstyle=tk.BUTT, joinstyle=tk.BEVEL)
+            elif self.arrow_end:
+                self.ID = CANVAS.create_line(self.points_list, fill=self.color, width=self.thickness,
+                                             dash=self.dashes, arrow=tk.LAST, capstyle=tk.BUTT, joinstyle=tk.BEVEL)
+            else:
+                self.ID = CANVAS.create_line(self.points_list, fill=self.color, width=self.thickness,
+                                             dash=self.dashes, capstyle=tk.BUTT, joinstyle=tk.BEVEL)
         else:
-            self.ID = CANVAS.create_line(x1, y1, x2, y2, fill=self.color, width=self.thickness, dash=self.dashes)
+            raise LINE_STYLE_ERROR
         if self.visible:
             CANVAS.itemconfig(self.ID, state = tk.NORMAL)
         else:
@@ -749,13 +782,14 @@ class Line:
         """Used to print information about an instance."""
         return "Object: " + self.type + "\t ID: " + str(self.ID)
     
-    def set_property(self, *, xy1=None, xy2=None, color=None, thickness=None, dashes=None, arrow_start=None, arrow_end=None, visible=None):
+    def set_property(self, *, points_list=None, color=None, thickness=None, dashes=None, arrow_start=None, arrow_end=None, visible=None):
         """Used to change one of the property values of an instance."""
         global CANVAS
-        if not xy1 is None:
-            self.xy1 = xy1
-        if not xy2 is None:
-            self.xy2 = xy2
+        global POINTS_LIST_ERROR
+        if not points_list is None:
+            if len(points_list) % 2 != 0:
+                raise POINTS_LIST_ERROR
+            self.points_list = points_list
         if not color is None:
             self.color = color
             if type(self.color) is tuple:
@@ -778,13 +812,13 @@ class Line:
         """Used to rotate the shape by x degrees. Negative values rotate the opposite direction."""
         global CANVAS
         global WINDOW
+        global LINE_STYLE_ERROR
         self.angle += angle
-        new_angle = math.radians(self.angle)
+        self.angle %= 360
+        new_angle = math.radians(angle)
         cos_val = math.cos(new_angle)
         sin_val = math.sin(new_angle)
-        x1, y1 = self.xy1
-        x2, y2 = self.xy2
-        shape_points = (x1, y1, x2, y2)
+        shape_points = self.points_list
         count = 0
         point = []
         points = []
@@ -811,16 +845,38 @@ class Line:
             y_old -= center_y
             x_new = x_old * cos_val - y_old * sin_val
             y_new = x_old * sin_val + y_old * cos_val
-            new_points.append([x_new + center_x, y_new + center_y])
+            new_points.append(x_new + center_x)
+            new_points.append(y_new + center_y)
         old_id = self.ID
-        if self.arrow_start and self.arrow_end:
-            self.ID = CANVAS.create_line(new_points, fill=self.color, width=self.thickness, dash=self.dashes, arrow=tk.BOTH)
-        elif self.arrow_start:
-            self.ID = CANVAS.create_line(new_points, fill=self.color, width=self.thickness, dash=self.dashes, arrow=tk.FIRST)
-        elif self.arrow_end:
-            self.ID = CANVAS.create_line(new_points, fill=self.color, width=self.thickness, dash=self.dashes, arrow=tk.LAST)
+        self.points_list = new_points
+        if self.style.lower() == "round":
+            if self.arrow_start and self.arrow_end:
+                self.ID = CANVAS.create_line(self.points_list, fill=self.color, width=self.thickness, dash=self.dashes, arrow=tk.BOTH,
+                                             capstyle=tk.ROUND, joinstyle=tk.ROUND)
+            elif self.arrow_start:
+                self.ID = CANVAS.create_line(self.points_list, fill=self.color, width=self.thickness,
+                                             dash=self.dashes, arrow=tk.FIRST, capstyle=tk.ROUND, joinstyle=tk.ROUND)
+            elif self.arrow_end:
+                self.ID = CANVAS.create_line(self.points_list, fill=self.color, width=self.thickness,
+                                             dash=self.dashes, arrow=tk.LAST, capstyle=tk.ROUND, joinstyle=tk.ROUND)
+            else:
+                self.ID = CANVAS.create_line(self.points_list, fill=self.color, width=self.thickness,
+                                             dash=self.dashes, capstyle=tk.ROUND, joinstyle=tk.ROUND)
+        elif self.style.lower() == "cut":
+            if self.arrow_start and self.arrow_end:
+                self.ID = CANVAS.create_line(self.points_list, fill=self.color, width=self.thickness, dash=self.dashes, arrow=tk.BOTH,
+                                             capstyle=tk.BUTT, joinstyle=tk.BEVEL)
+            elif self.arrow_start:
+                self.ID = CANVAS.create_line(self.points_list, fill=self.color, width=self.thickness,
+                                             dash=self.dashes, arrow=tk.FIRST, capstyle=tk.BUTT, joinstyle=tk.BEVEL)
+            elif self.arrow_end:
+                self.ID = CANVAS.create_line(self.points_list, fill=self.color, width=self.thickness,
+                                             dash=self.dashes, arrow=tk.LAST, capstyle=tk.BUTT, joinstyle=tk.BEVEL)
+            else:
+                self.ID = CANVAS.create_line(self.points_list, fill=self.color, width=self.thickness,
+                                             dash=self.dashes, capstyle=tk.BUTT, joinstyle=tk.BEVEL)
         else:
-            self.ID = CANVAS.create_line(new_points, fill=self.color, width=self.thickness, dash=self.dashes)
+            raise LINE_STYLE_ERROR
         CANVAS.tag_lower(self.ID, old_id)
         CANVAS.delete(old_id)
         if self.visible:
