@@ -6,7 +6,7 @@
 
 #######################
 # Easy Draw Module
-# Version 1.1.0
+# Version 1.1.1
 # Created by Joe Mazzone
 # Documentation: https://easy-draw.joemazzone.net/
 #######################
@@ -41,10 +41,12 @@ Easy Draw module - Objects and function to easily create drawings.
 """
 
 import tkinter as tk
+from tkinter import ttk
 import tkinter.colorchooser, tkinter.messagebox, tkinter.simpledialog
 from PIL import ImageGrab
 import math
 import time
+import platform
 
 
 class __EasyDrawError(Exception):
@@ -54,11 +56,15 @@ class __EasyDrawError(Exception):
         super().__init__(self.message)
 
 
-print("Welcome to Easy Draw! -- version 1.1.0 -- https://easy-draw.joemazzone.net/")
+print("Welcome to Easy Draw! -- version 1.1.1 -- https://easy-draw.joemazzone.net/")
+os = platform.system()
+print("Your OS is identified as " + os)
 WINDOW = None
 CANVAS = None
 GRID_LINES = []
 grid_on = False
+grid_btn_style = None
+btn_style = None
 POINTS_LIST_ERROR = __EasyDrawError(
     message="The points_list must have an even number of values as it should contain xy coordinate pairs.")
 LINE_COORDINATES_ERROR = __EasyDrawError(
@@ -76,9 +82,13 @@ def load_canvas(background=None):
     global CANVAS
     global GRID_LINES
     global grid_on
+    global btn_style
+    global grid_btn_style
     WINDOW = tk.Tk()
     WINDOW.title("Easy Draw")
     WINDOW.resizable(False, False)
+    grid_btn_style = ttk.Style()
+    btn_style = ttk.Style()
     y_labels = []
     x_labels = []
     WINDOW.columnconfigure(1, minsize=40)
@@ -87,28 +97,43 @@ def load_canvas(background=None):
     WINDOW.rowconfigure(3, minsize=40)      
     for i in range(4, 15):
         WINDOW.rowconfigure(i, minsize=50)              
-    colorDialog = tkinter.colorchooser.Chooser(WINDOW)
+    colorDialog = tkinter.colorchooser.Chooser()
     def openColorDialog():
         color = colorDialog.show()
         if not color[1] is None:
             tkinter.messagebox.showinfo("Your Color", 
                                         "The color you chose is: " + "\n\n" + color[1] + "\n\n" + "RBG (" + str(int(color[0][0])) 
                                         + ", " + str(int(color[0][1])) + ", " + str(int(color[0][2])) + ")")
-    color_button = tk.Button(
-        text = "Color Picker",
-        font = ("Arial", 12, "bold"),
-        bg = "#07649E",
-        fg = "#FFFFFF",
-        command = openColorDialog
-    )
+    if os == "Darwin":
+        color_button = ttk.Button(
+            text = "Color Picker",
+            style = "W.TButton",
+            command = openColorDialog
+        )
+    else:
+        color_button = tk.Button(
+            text = "Color Picker",
+            font = ("Arial", 10, "bold"),
+            bg = "#07649E",
+            fg = "#FFFFFF",
+            command = openColorDialog
+        )
     color_button.grid(column=1, row=1, columnspan=4, padx=5, pady=5)
     def toggle_grid():
         global GRID_LINES
         global grid_on
+        global s
         if grid_on:
             grid_on = False
-            grid_button["text"] = "Grid"
-            grid_button["bg"] = "#07649E"
+            if os == "Darwin":
+                grid_btn_style.configure(
+                    'G.TButton', 
+                    font = ("Arial", 10, "bold"),
+                    background = "#07649E"        
+                )
+            else:
+                grid_button["text"] = "Grid"
+                grid_button["bg"] = "#07649E"
             for line in GRID_LINES:
                 CANVAS.itemconfig(line, state = tk.HIDDEN)
             for label in x_labels:
@@ -117,31 +142,52 @@ def load_canvas(background=None):
                 label.configure(fg = WINDOW.cget("background"))
         else:
             grid_on = True
-            grid_button["text"] = "Grid"
-            grid_button["bg"] = "#E32636"
+            if os == "Darwin":
+                grid_btn_style.configure(
+                    'G.TButton', 
+                    font = ("Arial", 10, "bold"),
+                    background = "#E32636"        
+                )
+            else:
+                grid_button["text"] = "Grid"
+                grid_button["bg"] = "#E32636"
             for line in GRID_LINES:
                 CANVAS.itemconfig(line, state = tk.DISABLED)
             for label in x_labels:
                 label.configure(fg = "#07649E")
             for label in y_labels:
                 label.configure(fg = "#07649E")
-    grid_button = tk.Button(
-        text="Grid",
-        font=("Arial", 12, "bold"),
-        bg = "#07649E",
-        fg = "#FFFFFF",
-        command=toggle_grid
-    )
+    if os == "Darwin":
+        grid_button = ttk.Button(
+            text="Grid",
+            style = "G.TButton",
+            command=toggle_grid
+        )
+    else:
+        grid_button = tk.Button(
+            text="Grid",
+            font=("Arial", 10, "bold"),
+            bg = "#07649E",
+            fg = "#FFFFFF",
+            command=toggle_grid
+        )
     grid_button.grid(column=5, row=1, columnspan=4, padx=5, pady=5)
     CANVAS = tk.Canvas(width = 595, height = 595, bg=background, bd=2, cursor="crosshair", relief="ridge")
     CANVAS.grid(column=1, row=3, columnspan=13, rowspan=13, padx=5, sticky="nw")
-    save_button = tk.Button(
-        text="Save Canvas",
-        font=("Arial", 12, "bold"),
-        bg = "#07649E",
-        fg = "#FFFFFF",
-        command=save_canvas
-    )
+    if os == "Darwin":
+        save_button = ttk.Button(
+            text="Save Canvas",
+            style = "W.TButton",
+            command=save_canvas
+        )
+    else:
+        save_button = tk.Button(
+            text="Save Canvas",
+            font=("Arial", 10, "bold"),
+            bg = "#07649E",
+            fg = "#FFFFFF",
+            command=save_canvas
+        )
     save_button.grid(column=9, row=1, columnspan=4, padx=5, pady=5)
     # Display Coordinates
     def mousePosition(event):
@@ -167,6 +213,16 @@ def load_canvas(background=None):
         count += 1
     spacer1 = tk.Label(text = " ", font=("Arial", 2))
     spacer1.grid(column=15, row=3, sticky="w", padx=6)
+    btn_style.configure(
+        'W.TButton', 
+        font = ("Arial", 10, "bold"),
+        background = "#07649E"        
+    )
+    grid_btn_style.configure(
+        'G.TButton', 
+        font = ("Arial", 10, "bold"),
+        background = "#07649E"        
+    )
 
 
 def set_canvas_color(color):
@@ -204,6 +260,10 @@ def __screenshot__(filename):
     y = WINDOW.winfo_rooty() + CANVAS.winfo_y()
     x1 = x + CANVAS.winfo_width()
     y1 = y + CANVAS.winfo_height()
+    print("Saving " + filename + ".png ", end="")
+    for i in range(5):
+        WINDOW.after(250, print(".", end=""))
+    print("")
     ImageGrab.grab().crop((x,y,x1,y1)).save(filename + ".png")
     if grid_on:
         for line in GRID_LINES:
@@ -218,14 +278,9 @@ def save_canvas(name = None):
     for line in GRID_LINES:
         CANVAS.itemconfig(line, state = tk.HIDDEN)
     if name is None:
-        name = tkinter.simpledialog.askstring("Save File", "What would you like your picture's file name to be?", parent=WINDOW)
+        name = tkinter.simpledialog.askstring("Save File", "What would you like your picture's file name to be?")
     if (not name is None) and (name != ""):
-        print("Saving " + name + ".png ", end="")
-        for i in range(5):
-            time.sleep(0.25)
-            print(".", end="")
-        print("")
-        WINDOW.after(250, __screenshot__(name))
+        WINDOW.after(500, __screenshot__(name))
     
 
 def canvas_event_setup(event, handler):
