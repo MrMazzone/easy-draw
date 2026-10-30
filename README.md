@@ -10,6 +10,41 @@ It's easy!  Just download ```easy_draw.py``` and include it in your project dire
 
 Currently, the module is not on PyPI so it is not pip installable. Thus, you must download the ```easy_draw.py``` file.
 
+Easy Draw only uses the Python standard library, so there is nothing else to install.
+
+# Seeing Your Drawing
+
+When your program runs, Easy Draw:
+
+1. Writes your drawing to an ```index.html``` file in the same folder as your program.
+2. Opens the live drawing in your web browser (http://localhost:8765/).
+
+While your program is running, clicks, mouse movement, and key presses in the browser are sent to your event handlers. Open ```index.html``` any time to see your drawing again. Run your program again and the page goes live again.
+
+Close the browser tab (or press Ctrl+C) to stop your program.
+
+To print the finished page's HTML code, use ```easy_draw.end(print_html=True)```.
+
+Options for ```load_canvas()```:
+
+- ```port``` - The port for the live drawing. Default is ```8765```.
+- ```open_browser``` - Set to ```False``` if you want to open the page yourself.
+
+# What's New in 2.0
+
+- Drawings show in the browser instead of a Tkinter window.
+- ```Oval``` objects now rotate properly.
+- ```Rectangle``` can rotate around its top-left corner: ```rect.rotate(45, from_top_left=True)```
+- Every drawing object shares a ```Shape``` parent class.
+- Properties can be changed directly: ```circle.radius = 50``` works like ```circle.set_property(radius = 50)```.
+- ```Image``` objects can rotate.
+- ```.rotate()``` turns every object clockwise, including ```Arc``` and ```Text```, which used to turn counterclockwise.
+- Animations made with ```time.sleep()``` loops now show while they run.
+
+# Desktop Version
+
+The original Tkinter window version is still available as ```easy_draw_desktop.py```. It needs Tkinter and Pillow. Use it with ```import easy_draw_desktop as easy_draw```.
+
 # What is Easy Draw?
 
 Easy Draw is a easy to use Python module that allows you to create simple graphics primitives (rectangles, circles, polygons, etc.) with just Python function calls.
