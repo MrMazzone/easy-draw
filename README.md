@@ -6,7 +6,7 @@ Full Documentation - https://easy-draw.joemazzone.net/
 
 It's easy!  Just download ```easy_draw.py``` and include it in your project directory. 
 
-[Download!](https://github.com/MrMazzone/easy-draw/releases/download/v1.1.1/easy_draw.py)
+[Download!](https://github.com/MrMazzone/easy-draw/releases/download/v2.0.0/easy_draw.py)
 
 Currently, the module is not on PyPI so it is not pip installable. Thus, you must download the ```easy_draw.py``` file.
 
@@ -41,6 +41,36 @@ Options for ```load_canvas()```:
 - ```open_image()``` works with public image links: ```easy_draw.open_image("https://example.com/cat.png")```. The browser loads the image straight from the link, so viewing the drawing needs an internet connection.
 - ```.rotate()``` turns every object clockwise, including ```Arc``` and ```Text```, which used to turn counterclockwise.
 - Animations made with ```time.sleep()``` loops now show while they run.
+
+# Java Version
+
+```EasyDraw.java``` does the same thing for Java (Java 17 or newer). [Download it](https://github.com/MrMazzone/easy-draw/releases/download/v2.0.0/EasyDraw.java) and put it in the same folder as your program:
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        EasyDraw.loadCanvas();
+
+        EasyDraw.Rectangle square = new EasyDraw.Rectangle(100, 100, 200, 200);
+        square.setColor("red");
+        square.eventSetup("<Button-1>", event -> square.rotate(10));
+
+        EasyDraw.end();
+    }
+}
+```
+
+Compile and run it with ```javac *.java``` and ```java Main```.
+
+How it differs from the Python version:
+
+- Shapes are made with ```new EasyDraw.ShapeName(...)``` and the required values in order, like ```new EasyDraw.Circle(centerX, centerY, radius)```.
+- Optional properties use setters and getters, like ```setColor("red")```, ```setColor(255, 0, 0)```, ```setBorderWidth(5)```, and ```getRadius()```. Coordinates use methods like ```setCenter(x, y)``` and ```setXY(x, y)```.
+- ```Polygon``` and ```Line``` take their points as numbers: ```new EasyDraw.Line(100, 100, 200, 200)```.
+- Event handlers are lambdas: ```shape.eventSetup("<Button-1>", event -> { ... })```. The event strings are the same as Python's. The typed character is ```event.character```.
+- ```setDashes(0)``` and ```setBorderColor(null)``` remove dashes and borders.
+- Drawing errors throw an ```EasyDraw.EasyDrawException```.
+- Files like images and ```index.html``` use the folder you run your program from.
 
 # Desktop Version
 

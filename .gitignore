@@ -50,5 +50,8 @@ coverage.xml
 .DS_Store
 Thumbs.db
 
+# Java
+*.class
+
 # Local test programs
 tests/
