@@ -57,6 +57,9 @@ import sys
 import threading
 import time
 import traceback
+import urllib.error
+import urllib.parse
+import urllib.request
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -94,7 +97,7 @@ _RUN_ID = str(int(time.time() * 1000))
 _BACKGROUND = "white"
 _SHAPES = {}            # ID -> shape, in drawing order (bottom to top)
 _IMAGES = {}            # image ID -> data URI
-_IMAGE_CACHE = {}       # absolute path -> ImageFile
+_IMAGE_CACHE = {}       # absolute path or URL -> ImageFile
 _CANVAS_EVENTS = []     # (event spec, handler)
 _CLIENTS = set()        # one queue per connected browser tab
 _PENDING_SAVES = {}     # token -> save message
@@ -219,34 +222,70 @@ def rgb_convert(rgb):
 
 
 class ImageFile:
-    """An image file opened with open_image(). Give it to an Image object to draw it."""
+    """An image opened with open_image(). Give it to an Image object to draw it."""
     _TYPES = {
         ".png": "image/png", ".gif": "image/gif", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
         ".webp": "image/webp", ".bmp": "image/bmp", ".svg": "image/svg+xml",
     }
+    _TYPES_ERROR = "Easy Draw can open .png, .gif, .jpg, .webp, .bmp, and .svg images, not \""
+    _MAX_DOWNLOAD = 10 * 1024 * 1024
 
     def __init__(self, filename):
-        path = _find_file(filename)
-        extension = os.path.splitext(path)[1].lower()
-        if extension not in self._TYPES:
-            raise EasyDrawError("Easy Draw can open .png, .gif, .jpg, .webp, .bmp, and .svg images, not \"" + filename + "\".")
-        with open(path, "rb") as file:
-            data = base64.b64encode(file.read()).decode("ascii")
         self.filename = filename
         self.ID = _new_id()
-        self._src = "data:" + self._TYPES[extension] + ";base64," + data
+        if _is_url(filename):
+            # The browser loads internet images itself, straight from the link.
+            self._src = filename.strip()
+            return
+        path = _find_file(filename)
+        mime = self._TYPES.get(os.path.splitext(path)[1].lower())
+        if mime is None:
+            raise EasyDrawError(self._TYPES_ERROR + filename + "\".")
+        with open(path, "rb") as file:
+            self._src = "data:" + mime + ";base64," + base64.b64encode(file.read()).decode("ascii")
+
+    @classmethod
+    def _download(cls, url):
+        """Downloads an internet image, for saving PNGs when the image's site blocks the browser."""
+        request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Easy Draw " + VERSION + ")"})
+        try:
+            with urllib.request.urlopen(request, timeout=15) as response:
+                content_type = response.headers.get_content_type()
+                data = response.read(cls._MAX_DOWNLOAD + 1)
+        except (urllib.error.URLError, OSError, ValueError) as error:
+            reason = getattr(error, "reason", error)
+            raise EasyDrawError("Could not download the image at \"" + url + "\" (" + str(reason) + "). "
+                                "Check that the link is correct and opens the image in your browser.") from None
+        if len(data) > cls._MAX_DOWNLOAD:
+            raise EasyDrawError("The image at \"" + url + "\" is bigger than 10 MB. Try a smaller image.")
+        if content_type in cls._TYPES.values():
+            return data, content_type
+        sniffed = _sniff_image_type(data)
+        if sniffed is not None:
+            return data, sniffed
+        extension = os.path.splitext(urllib.parse.urlparse(url).path)[1].lower()
+        if extension in cls._TYPES and not content_type.startswith("text/"):
+            return data, cls._TYPES[extension]
+        raise EasyDrawError("The link \"" + url + "\" is not a .png, .gif, .jpg, .webp, .bmp, or .svg image. "
+                            "Make sure you copy the image's address, not the web page's address.")
 
 
 def open_image(filename):
-    """Used to open an image file for Easy Draw to use."""
-    path = os.path.abspath(_find_file(filename))
+    """
+    Used to open an image file for Easy Draw to use.
+    filename can be a file next to your program or a public image link that starts with http:// or https://.
+    """
+    if _is_url(filename):
+        key = filename.strip()
+    else:
+        key = os.path.abspath(_find_file(filename))
     with _SCENE_LOCK:
-        if path not in _IMAGE_CACHE:
-            image = ImageFile(filename)
-            _IMAGE_CACHE[path] = image
+        if key not in _IMAGE_CACHE:
+            image = ImageFile(key if _is_url(filename) else filename)
+            _IMAGE_CACHE[key] = image
             _IMAGES[image.ID] = image._src
             _broadcast({"type": "image", "id": image.ID, "src": image._src})
-        return _IMAGE_CACHE[path]
+        return _IMAGE_CACHE[key]
 
 
 class Event:
@@ -1078,6 +1117,27 @@ def _program_dir():
     return os.getcwd()
 
 
+def _sniff_image_type(data):
+    """Guesses an image's type from its first bytes, for servers that do not say."""
+    if data.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "image/png"
+    if data.startswith((b"GIF87a", b"GIF89a")):
+        return "image/gif"
+    if data.startswith(b"\xff\xd8\xff"):
+        return "image/jpeg"
+    if data[0:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "image/webp"
+    if data.startswith(b"BM"):
+        return "image/bmp"
+    if b"<svg" in data[:1024].lower():
+        return "image/svg+xml"
+    return None
+
+
+def _is_url(filename):
+    return isinstance(filename, str) and filename.strip().lower().startswith(("http://", "https://"))
+
+
 def _find_file(filename):
     for folder in (os.getcwd(), _program_dir()):
         path = os.path.join(folder, filename)
@@ -1285,8 +1345,35 @@ class _RequestHandler(BaseHTTPRequestHandler):
             self.wfile.write(body)
         elif path == "/events":
             self._stream()
+        elif path == "/image":
+            self._send_image()
         else:
             self._empty(404)
+
+    def _send_image(self):
+        """Downloads an internet image for the browser when the image's site will not share it with the page."""
+        query = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query)
+        try:
+            image_id = int(query.get("id", [""])[0])
+        except ValueError:
+            image_id = None
+        with _SCENE_LOCK:
+            src = _IMAGES.get(image_id)
+        if src is None or not _is_url(src):
+            self._empty(404)
+            return
+        try:
+            data, mime = ImageFile._download(src)
+        except EasyDrawError as error:
+            print(error)
+            self._empty(502)
+            return
+        self.send_response(200)
+        self._cors()
+        self.send_header("Content-Type", mime)
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
 
     def do_POST(self):
         path = self.path.split("?")[0]
@@ -1913,11 +2000,43 @@ _HTML_TEMPLATE = r'''<!DOCTYPE html>
     $("color-info").hidden = false;
   });
 
+  function blobToDataURL(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  async function fetchDataURL(url) {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(response.status);
+    return blobToDataURL(await response.blob());
+  }
+
+  // A saved picture can only include internet images that are copied into it first.
+  async function inlineImage(id, src) {
+    if (src.startsWith("data:")) return src;
+    try { return await fetchDataURL(src); } catch (err) { /* The site does not share the image with pages. */ }
+    if (live) {
+      try { return await fetchDataURL(CFG.server + "/image?id=" + id); } catch (err) { /* Python could not get it either. */ }
+    }
+    return null;
+  }
+
   async function toPNG(s) {
-    await Promise.all(Object.keys(s.images).map((id) => loadImage(id, s.images[id])));
+    const images = {};
+    const missing = [];
+    await Promise.all(Object.keys(s.images).map(async (id) => {
+      await loadImage(id, s.images[id]);
+      images[id] = await inlineImage(id, s.images[id]);
+      if (!images[id] && s.shapes.some((shape) => shape.kind === "image" && shape.img == id)) missing.push(s.images[id]);
+    }));
+    if (missing.length) console.warn("Easy Draw could not include these images in the saved picture:", missing);
     const svg = el("svg", { width: 600, height: 600, viewBox: "0 0 600 600" });
     svg.append(el("rect", { width: 600, height: 600, fill: s.background }));
-    for (const shape of s.shapes) svg.append(build(shape, s.images));
+    for (const shape of s.shapes) svg.append(build(shape, images));
     const img = new Image();
     img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(new XMLSerializer().serializeToString(svg));
     await img.decode();

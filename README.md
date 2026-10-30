@@ -38,6 +38,7 @@ Options for ```load_canvas()```:
 - Every drawing object shares a ```Shape``` parent class.
 - Properties can be changed directly: ```circle.radius = 50``` works like ```circle.set_property(radius = 50)```.
 - ```Image``` objects can rotate.
+- ```open_image()``` works with public image links: ```easy_draw.open_image("https://example.com/cat.png")```. The browser loads the image straight from the link, so viewing the drawing needs an internet connection.
 - ```.rotate()``` turns every object clockwise, including ```Arc``` and ```Text```, which used to turn counterclockwise.
 - Animations made with ```time.sleep()``` loops now show while they run.
 
